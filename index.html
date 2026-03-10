@@ -352,6 +352,88 @@ class="bg-white text-black px-12 py-5 rounded-md text-lg font-bold">
 
 </section>
 
+  <!-- LEAD FORM -->
+<section id="lead-form" class="py-20 bg-white">
+  <div class="max-w-2xl mx-auto px-6">
+
+    <div class="text-center mb-10">
+      <span class="text-xs font-semibold tracking-[0.22em] uppercase text-green-700">Бесплатная консультация</span>
+      <h2 class="text-3xl font-bold mt-3 mb-3">Оставьте заявку</h2>
+      <p class="text-gray-500 text-sm">Перезвоним в течение 30 минут и ответим на все вопросы</p>
+    </div>
+
+    <div id="lf-form" class="bg-gray-50 border border-gray-200 rounded-2xl p-8 md:p-10">
+
+      <div class="grid md:grid-cols-2 gap-6">
+
+        <!-- Имя -->
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-semibold tracking-widest uppercase text-gray-400">Ваше имя</label>
+          <input id="lf-name" type="text" placeholder="Иван Иванов"
+            class="border-b border-gray-300 bg-transparent py-3 text-base outline-none focus:border-green-700 transition-colors placeholder-gray-300">
+        </div>
+
+        <!-- Телефон -->
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-semibold tracking-widest uppercase text-gray-400">Телефон</label>
+          <input id="lf-phone" type="tel" placeholder="+7 (___) ___-__-__"
+            class="border-b border-gray-300 bg-transparent py-3 text-base outline-none focus:border-green-700 transition-colors placeholder-gray-300">
+        </div>
+
+        <!-- Тип объекта -->
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-semibold tracking-widest uppercase text-gray-400">Тип объекта</label>
+          <select id="lf-type"
+            class="border-b border-gray-300 bg-transparent py-3 text-base outline-none focus:border-green-700 transition-colors text-gray-600 appearance-none cursor-pointer">
+            <option value="" disabled selected>Выберите тип</option>
+            <option>Квартира</option>
+            <option>Частный дом / коттедж</option>
+            <option>Офис / коммерческое помещение</option>
+            <option>Апартаменты</option>
+          </select>
+        </div>
+
+        <!-- Площадь -->
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-semibold tracking-widest uppercase text-gray-400">Площадь, м²</label>
+          <input id="lf-area" type="number" placeholder="Например, 85"
+            class="border-b border-gray-300 bg-transparent py-3 text-base outline-none focus:border-green-700 transition-colors placeholder-gray-300">
+        </div>
+
+      </div>
+
+      <!-- Комментарий -->
+      <div class="flex flex-col gap-1 mt-6">
+        <label class="text-xs font-semibold tracking-widest uppercase text-gray-400">Комментарий (необязательно)</label>
+        <textarea id="lf-comment" rows="3" placeholder="Расскажите о пожеланиях или сроках…"
+          class="border-b border-gray-300 bg-transparent py-3 text-base outline-none focus:border-green-700 transition-colors resize-none placeholder-gray-300"></textarea>
+      </div>
+
+      <!-- Кнопка -->
+      <button onclick="submitLeadForm()"
+        class="mt-8 w-full bg-green-premium text-white py-4 rounded-xl text-sm font-bold tracking-widest uppercase hover:bg-green-800 transition-colors">
+        Отправить заявку в WhatsApp
+      </button>
+
+      <p class="text-xs text-gray-400 text-center mt-4">
+        Нажимая кнопку, вы соглашаетесь с политикой конфиденциальности
+      </p>
+
+    </div>
+
+    <!-- Успех -->
+    <div id="lf-success" class="hidden text-center py-16">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-full border-2 border-green-700 mb-6">
+        <svg class="w-7 h-7 text-green-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+      <h3 class="text-2xl font-bold mb-3">Заявка отправлена!</h3>
+      <p class="text-gray-500">Откроется WhatsApp — напишите нам, и мы ответим в ближайшее время.</p>
+    </div>
+
+  </div>
+
 <!-- FOOTER -->
 
 <footer class="py-16 bg-white border-t">
@@ -392,8 +474,98 @@ document.getElementById("result").innerHTML=
 
 </script>
 
+ <script>
+
+function calcPrice(){
+
+let area=document.getElementById("area").value
+let type=document.getElementById("type").value
+
+let total=area*type
+
+document.getElementById("result").innerHTML=
+"Примерная стоимость: "+total.toLocaleString()+" ₸"
+
+}
+
+</script>
+
+<script>
+
+/* ── Маска телефона ── */
+const lfPhone = document.getElementById('lf-phone');
+if(lfPhone){
+  lfPhone.addEventListener('input', function(e){
+    let v = e.target.value.replace(/\D/g,'');
+    if(v.startsWith('8')) v = '7'+v.slice(1);
+    if(v.length > 0 && !v.startsWith('7')) v = '7'+v;
+    v = v.slice(0,11);
+    let f = '';
+    if(v.length > 0)  f = '+'+v[0];
+    if(v.length > 1)  f += ' ('+v.slice(1,4);
+    if(v.length >= 4) f += ') '+v.slice(4,7);
+    if(v.length >= 7) f += '-'+v.slice(7,9);
+    if(v.length >= 9) f += '-'+v.slice(9,11);
+    e.target.value = f;
+  });
+}
+
+/* ── Отправка в WhatsApp ── */
+function submitLeadForm(){
+  const name    = document.getElementById('lf-name').value.trim();
+  const phone   = document.getElementById('lf-phone').value.trim();
+  const type    = document.getElementById('lf-type').value;
+  const area    = document.getElementById('lf-area').value.trim();
+  const comment = document.getElementById('lf-comment').value.trim();
+
+  if(!name)  { lfHighlight('lf-name',  'Введите имя');    return; }
+  if(phone.replace(/\D/g,'').length < 11){ lfHighlight('lf-phone','Введите телефон'); return; }
+  if(!type)  { lfHighlight('lf-type',  'Выберите тип');   return; }
+
+  const msg = [
+    '🏠 *Новая заявка с сайта BN Premium*',
+    '',
+    `👤 Имя: ${name}`,
+    `📞 Телефон: ${phone}`,
+    `🏗 Объект: ${type}`,
+    area    ? `📐 Площадь: ${area} м²` : '',
+    comment ? `💬 Комментарий: ${comment}` : '',
+  ].filter(Boolean).join('\n');
+
+  const url = 'https://wa.me/77761267613?text=' + encodeURIComponent(msg);
+  window.open(url, '_blank');
+
+  document.getElementById('lf-form').style.display    = 'none';
+  document.getElementById('lf-success').style.display = 'block';
+  document.getElementById('lf-success').classList.remove('hidden');
+}
+
+function lfHighlight(id, msg){
+  const el = document.getElementById(id);
+  el.style.borderBottomColor = '#e53e3e';
+  el.focus();
+  el.setAttribute('placeholder', msg);
+  setTimeout(()=>{ el.style.borderBottomColor=''; }, 1500);
+}
+
+/* ── Калькулятор ── */
+function calcPrice(){
+
+let area=document.getElementById("area").value
+let type=document.getElementById("type").value
+
+let total=area*type
+
+document.getElementById("result").innerHTML=
+"Примерная стоимость: "+total.toLocaleString()+" ₸"
+
+}
+
+</script>
+  
 </body>
 </html>
+
 
 
 
