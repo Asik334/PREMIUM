@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BN Premium — 3D Конфигуратор</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --g:#2D5A27;--gl:#3d7a35;--gold:#c9a96e;--dark:#111;
+  --bg:#f0ece6;--panel:#ffffff;--border:#e4dfd8;
+  --text:#1a1a1a;--muted:#8a8480;--radius:12px;
+  --sh:0 4px 24px rgba(0,0,0,0.08);
+}
+body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh;display:flex;flex-direction:column}
+
+/* HEADER */
+.hdr{background:#fff;border-bottom:1px solid var(--border);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:200;box-shadow:0 1px 12px rgba(0,0,0,0.05)}
+.logo{font-size:18px;font-weight:700;letter-spacing:-0.5px}.logo b{color:var(--g)}
+.hdr-mid{font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;color:var(--muted);letter-spacing:1px}
+.hdr-btn{background:var(--g);color:#fff;border:none;padding:9px 20px;border-radius:50px;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:600;cursor:pointer;letter-spacing:.5px;text-decoration:none;transition:.2s}
+.hdr-btn:hover{background:var(--gl)}
+
+/* LAYOUT */
+.main{display:flex;flex:1;overflow:hidden}
+
+/* CANVAS */
+.cv-wrap{flex:1;position:relative;background:#d8d0c8;overflow:hidden}
+#cv{width:100%;height:100%;display:block;cursor:grab}
+#cv:active{cursor:grabbing}
+.cv-hint{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.5);color:#fff;padding:7px 18px;border-radius:50px;font-size:10px;letter-spacing:1.5px;pointer-events:none;transition:opacity 1s;text-transform:uppercase}
+.cv-hint.gone{opacity:0}
+
+/* SELECTED ITEM OVERLAY */
+.sel-overlay{position:absolute;top:16px;left:16px;background:rgba(255,255,255,0.92);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-size:11px;font-weight:600;color:var(--g);display:none;align-items:center;gap:8px;box-shadow:var(--sh)}
+.sel-overlay.show{display:flex}
+.sel-dot{width:8px;height:8px;background:var(--g);border-radius:50%;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* PANEL */
+.panel{width:320px;background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.tab{flex:1;padding:13px 4px;text-align:center;font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;color:var(--muted);border:none;background:none;transition:.2s;border-bottom:2px solid transparent;font-family:'Montserrat',sans-serif}
+.tab.on{color:var(--g);border-bottom-color:var(--g)}
+.pane{flex:1;overflow-y:auto;display:none}
+.pane.on{display:block}
+.pane::-webkit-scrollbar{width:3px}
+.pane::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* SECTIONS */
+.sec{padding:18px 18px 14px;border-bottom:1px solid var(--border)}
+.sec:last-child{border-bottom:none;padding-bottom:24px}
+.sec-ttl{font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:13px;display:flex;align-items:center;gap:8px}
+.sec-ttl::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ROOM TABS */
+.rm-tabs{display:flex;flex-wrap:wrap;gap:5px}
+.rm-tab{padding:6px 13px;border:1.5px solid var(--border);border-radius:50px;font-size:10px;font-weight:600;cursor:pointer;color:var(--muted);background:transparent;font-family:'Montserrat',sans-serif;transition:.2s;letter-spacing:.3px}
+.rm-tab.on{background:var(--g);border-color:var(--g);color:#fff}
+.rm-tab:hover:not(.on){border-color:var(--g);color:var(--g)}
+
+/* SWATCHES */
+.sw-grid{display:flex;flex-wrap:wrap;gap:7px}
+.sw{width:32px;height:32px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:.15s;position:relative;flex-shrink:0}
+.sw:hover{transform:scale(1.18)}
+.sw.on{border-color:var(--g);box-shadow:0 0 0 2px rgba(45,90,39,.25)}
+.sw-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.sw-lbl{font-size:10px;color:var(--muted);min-width:80px;font-weight:500}
+
+/* MATERIAL GRID */
+.mat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.mat{border:2px solid var(--border);border-radius:9px;padding:7px 6px 6px;cursor:pointer;transition:.2s;text-align:center}
+.mat:hover{border-color:var(--gl)}
+.mat.on{border-color:var(--g);background:#f0f8ed}
+.mat-prev{height:38px;border-radius:5px;margin-bottom:5px}
+.mat-nm{font-size:9px;font-weight:600;letter-spacing:.3px}
+.mat-sub{font-size:8px;color:var(--muted);margin-top:1px}
+
+/* FURNITURE LIST */
+.flist{display:flex;flex-direction:column;gap:5px}
+.frow{display:flex;align-items:center;gap:10px;padding:8px 10px;background:#f8f4f0;border-radius:8px;cursor:pointer;transition:.15s;border:1.5px solid transparent}
+.frow:hover{background:#f0ebe4;border-color:var(--border)}
+.frow.selected{border-color:var(--g);background:#f0f8ed}
+.frow-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.frow-info{flex:1}
+.frow-nm{font-size:11px;font-weight:600}
+.frow-sub{font-size:9px;color:var(--muted);margin-top:1px}
+.frow-actions{display:flex;align-items:center;gap:6px}
+.tog{width:32px;height:18px;background:#ddd;border-radius:9px;position:relative;transition:.2s;flex-shrink:0;cursor:pointer}
+.tog.on{background:var(--g)}
+.tog::after{content:'';position:absolute;width:12px;height:12px;background:#fff;border-radius:50%;top:3px;left:3px;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.tog.on::after{left:17px}
+.edit-btn{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--border);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:.15s}
+.edit-btn:hover{border-color:var(--g);background:#f0f8ed}
+
+/* FURNITURE EDITOR */
+.furn-editor{background:#f8f4f0;border-radius:10px;padding:12px;margin-top:8px;display:none}
+.furn-editor.show{display:block}
+.fe-ttl{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--g);margin-bottom:10px}
+.fe-row{margin-bottom:10px}
+.fe-lbl{font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.fe-colors{display:flex;flex-wrap:wrap;gap:5px}
+.fe-sw{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:.15s;flex-shrink:0}
+.fe-sw:hover{transform:scale(1.2)}
+.fe-sw.on{border-color:var(--g)}
+.fe-styles{display:flex;gap:5px;flex-wrap:wrap}
+.fe-style{padding:4px 10px;border:1.5px solid var(--border);border-radius:50px;font-size:9px;font-weight:600;cursor:pointer;color:var(--muted);background:transparent;font-family:'Montserrat',sans-serif;transition:.2s}
+.fe-style.on{background:var(--g);border-color:var(--g);color:#fff}
+.fe-style:hover:not(.on){border-color:var(--g);color:var(--g)}
+
+/* SLIDER */
+.slider-wrap{display:flex;align-items:center;gap:8px}
+.slider-wrap input[type=range]{flex:1;-webkit-appearance:none;height:4px;background:var(--border);border-radius:2px;outline:none}
+.slider-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--g);border-radius:50%;cursor:pointer}
+.slider-val{font-size:11px;font-weight:600;color:var(--g);min-width:28px;text-align:right}
+
+/* LIGHTING */
+.light-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.light-opt{border:1.5px solid var(--border);border-radius:9px;padding:9px 8px;cursor:pointer;transition:.2s;text-align:center}
+.light-opt:hover{border-color:var(--gl)}
+.light-opt.on{border-color:var(--g);background:#f0f8ed}
+.light-icon{font-size:22px;margin-bottom:4px}
+.light-nm{font-size:9px;font-weight:600}
+
+/* PRESETS */
+.preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.preset{border:1.5px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:.2s}
+.preset:hover{border-color:var(--g);transform:translateY(-2px);box-shadow:var(--sh)}
+.preset.on{border-color:var(--g)}
+.preset-preview{height:60px;display:flex;align-items:center;justify-content:center;font-size:24px}
+.preset-nm{padding:6px 8px;font-size:10px;font-weight:600;border-top:1px solid var(--border)}
+.preset-sub{font-size:8px;color:var(--muted);padding:0 8px 6px}
+
+/* CTA */
+.cta-box{margin:14px;background:linear-gradient(135deg,#2D5A27,#3d7a35);border-radius:12px;padding:16px;text-align:center;color:#fff}
+.cta-box p{font-size:11px;opacity:.85;margin-bottom:12px;line-height:1.6}
+.wa-btn{display:block;background:#fff;color:var(--g);text-decoration:none;padding:11px;border-radius:8px;font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;transition:.2s}
+.wa-btn:hover{background:#f0f8ed}
+
+/* COLOR PICKER LARGE */
+.color-picker-large{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.cpx{width:100%;aspect-ratio:1;border-radius:7px;cursor:pointer;border:2px solid transparent;transition:.15s;position:relative}
+.cpx:hover{transform:scale(1.08)}
+.cpx.on{border-color:var(--g)}
+.cpx-name{font-size:8px;color:var(--muted);text-align:center;margin-top:3px;line-height:1.2}
+.color-section{margin-bottom:12px}
+.color-section-lbl{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+
+@media(max-width:760px){
+  .main{flex-direction:column}
+  .panel{width:100%;height:42vh;border-left:none;border-top:1px solid var(--border)}
+  .cv-wrap{flex:none;height:58vw;min-height:200px}
+  .hdr-mid{display:none}
+  .mat-grid{grid-template-columns:1fr 1fr 1fr}
+  .color-picker-large{grid-template-columns:repeat(5,1fr)}
+}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="logo">BN <b>PREMIUM</b></div>
+  <div class="hdr-mid">Конфигуратор интерьера</div>
+  <a href="https://wa.me/77761267613" class="hdr-btn" target="_blank">💬 WhatsApp</a>
+</header>
+
+<div class="main">
+  <div class="cv-wrap">
+    <canvas id="cv"></canvas>
+    <div class="cv-hint" id="hint">🖱 Вращайте · Прокрутка — зум · Клик на мебель — редактировать</div>
+    <div class="sel-overlay" id="sel-overlay">
+      <div class="sel-dot"></div>
+      <span id="sel-name">Диван</span> — нажмите для редактирования
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="tabs">
+      <button class="tab on" onclick="switchTab('room',this)">Комната</button>
+      <button class="tab" onclick="switchTab('walls',this)">Отделка</button>
+      <button class="tab" onclick="switchTab('furn',this)">Мебель</button>
+      <button class="tab" onclick="switchTab('style',this)">Стиль</button>
+    </div>
+
+    <!-- ROOM TAB -->
+    <div class="pane on" id="pane-room">
+      <div class="sec">
+        <div class="sec-ttl">Тип помещения</div>
+        <div class="rm-tabs">
+          <button class="rm-tab on" onclick="setRoom('living',this)">Гостиная</button>
+          <button class="rm-tab" onclick="setRoom('bedroom',this)">Спальня</button>
+          <button class="rm-tab" onclick="setRoom('kitchen',this)">Кухня</button>
+          <button class="rm-tab" onclick="setRoom('office',this)">Кабинет</button>
+          <button class="rm-tab" onclick="setRoom('dining',this)">Столовая</button>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-ttl">Освещение</div>
+        <div class="light-grid">
+          <div class="light-opt on" onclick="setLight('day',this)">
+            <div class="light-icon">☀️</div>
+            <div class="light-nm">Дневной</div>
+          </div>
+          <div class="light-opt" onclick="setLight('evening',this)">
+            <div class="light-icon">🌆</div>
+            <div class="light-nm">Вечерний</div>
+          </div>
+          <div class="light-opt" onclick="setLight('warm',this)">
+            <div class="light-icon">🕯️</div>
+            <div class="light-nm">Тёплый</div>
+          </div>
+          <div class="light-opt" onclick="setLight('studio',this)">
+            <div class="light-icon">💡</div>
+            <div class="light-nm">Студийный</div>
+          </div>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-ttl">Высота потолка</div>
+        <div class="slider-wrap">
+          <span style="font-size:10px;color:var(--muted)">2.5м</span>
+          <input type="range" min="0" max="2" step="1" value="1" oninput="setCeilHeight(this.value,this)">
+          <span style="font-size:10px;color:var(--muted)">3.5м</span>
+          <span class="slider-val" id="ceil-h-val">3.0м</span>
+        </div>
+      </div>
+      <div class="cta-box">
+        <p>Понравился дизайн? Воплотим ваш интерьер в жизнь за 60 дней!</p>
+        <a href="https://wa.me/77761267613?text=%F0%9F%8F%A0%20%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5!%20%D0%9C%D0%B5%D0%BD%D1%8F%20%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%B5%D1%81%D1%83%D0%B5%D1%82%20%D1%80%D0%B5%D0%BC%D0%BE%D0%BD%D1%82%20%D0%B8%D0%B7%20%D0%BA%D0%BE%D0%BD%D1%84%D0%B8%D0%B3%D1%83%D1%80%D0%B0%D1%82%D0%BE%D1%80%D0%B0%20BN%20Premium" class="wa-btn" target="_blank">💬 Обсудить в WhatsApp</a>
+      </div>
+    </div>
+
+    <!-- WALLS TAB -->
+    <div class="pane" id="pane-walls">
+      <div class="sec">
+        <div class="sec-ttl">Цвет стен</div>
+        <div class="color-picker-large" id="wall-colors"></div>
+      </div>
+      <div class="sec">
+        <div class="sec-ttl">Покрытие пола</div>
+        <div class="mat-grid" id="floor-mats"></div>
+      </div>
+      <div class="sec">
+        <div class="sec-ttl">Потолок</div>
+        <div class="color-picker-large" id="ceil-colors"></div>
+      </div>
+      <div class="sec">
+        <div class="sec-ttl">Плинтус и молдинги</div>
+        <div class="sw-grid" id="mold-colors"></div>
+      </div>
+    </div>
+
+    <!-- FURNITURE TAB -->
+    <div class="pane" id="pane-furn">
+      <div class="sec">
+        <div class="sec-ttl">Мебель</div>
+        <div class="flist" id="flist"></div>
+      </div>
+    </div>
+
+    <!-- STYLE TAB -->
+    <div class="pane" id="pane-style">
+      <div class="sec">
+        <div class="sec-ttl">Готовые стили</div>
+        <div class="preset-grid" id="presets"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  THREE.JS SETUP
+// ═══════════════════════════════════════════════════════
+const canvas = document.getElementById('cv');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2('#c0b8b0', 0.028);
+
+const camera = new THREE.PerspectiveCamera(48,1,0.1,100);
+camera.position.set(5,4,8);
+camera.lookAt(0,1.5,0);
+
+function resize(){
+  const w=canvas.parentElement.clientWidth, h=canvas.parentElement.clientHeight;
+  renderer.setSize(w,h); camera.aspect=w/h; camera.updateProjectionMatrix();
+}
+resize(); window.addEventListener('resize',resize);
+
+// LIGHTS
+const ambLight = new THREE.AmbientLight(0xfff4e8, 0.55);
+scene.add(ambLight);
+const sunLight = new THREE.DirectionalLight(0xfff4d0, 2.0);
+sunLight.position.set(7,12,5); sunLight.castShadow=true;
+sunLight.shadow.mapSize.set(2048,2048);
+sunLight.shadow.camera.near=0.5; sunLight.shadow.camera.far=40;
+sunLight.shadow.camera.left=-12; sunLight.shadow.camera.right=12;
+sunLight.shadow.camera.top=12; sunLight.shadow.camera.bottom=-12;
+sunLight.shadow.bias=-0.001;
+scene.add(sunLight);
+const fillLight = new THREE.PointLight(0xe8f0ff, 0.5, 25);
+fillLight.position.set(-5,6,-4); scene.add(fillLight);
+const warmLight = new THREE.PointLight(0xffe090, 0.7, 14);
+warmLight.position.set(0,4.5,0); scene.add(warmLight);
+const rimLight = new THREE.DirectionalLight(0xffeedd, 0.4);
+rimLight.position.set(-4,3,5); scene.add(rimLight);
+
+// ═══════════════════════════════════════════════════════
+//  COLOR & MATERIAL DATA
+// ═══════════════════════════════════════════════════════
+const WALL_COLORS = [
+  {hex:'#F7F3EC',name:'Шёлк'},{hex:'#EDE5D8',name:'Топлёный крем'},
+  {hex:'#E0D8CC',name:'Льняной'},{hex:'#D5CFC6',name:'Серебристый лён'},
+  {hex:'#C8C0B5',name:'Серо-бежевый'},{hex:'#BFC0C0',name:'Холодный серый'},
+  {hex:'#D0D8CC',name:'Шалфей бледный'},{hex:'#C4D0BC',name:'Шалфей'},
+  {hex:'#B0C4B0',name:'Мятный'},{hex:'#A8C0A8',name:'Зелёный туман'},
+  {hex:'#C8D4C0',name:'Фисташковый'},{hex:'#D4C8C0',name:'Пудровая роза'},
+  {hex:'#C8B8B8',name:'Пыльная роза'},{hex:'#D0C0C8',name:'Лаванда'},
+  {hex:'#B8C8D4',name:'Голубой туман'},{hex:'#B0C0D0',name:'Стальной голубой'},
+  {hex:'#3A4A3C',name:'Тёмный лес'},{hex:'#2D3A2E',name:'Бутылочный'},
+  {hex:'#3A3530',name:'Венге'},{hex:'#2A2A2A',name:'Антрацит'},
+  {hex:'#1A1A1A',name:'Чёрный'},{hex:'#FFFFFF',name:'Белый'},
+  {hex:'#F0EBE0',name:'Кремовый'},{hex:'#E8D8C8',name:'Карамель'},
+];
+const CEIL_COLORS = [
+  {hex:'#FFFFFF',name:'Белый'},{hex:'#F8F4EE',name:'Кремовый'},
+  {hex:'#F0EBE0',name:'Тёплый белый'},{hex:'#E8E0D8',name:'Льняной'},
+  {hex:'#E0DCE0',name:'Серый'},{hex:'#D4D8D4',name:'Голубовато-серый'},
+  {hex:'#2A2A2A',name:'Антрацит'},{hex:'#1A1A1A',name:'Чёрный'},
+  {hex:'#C4D4C4',name:'Зеленоватый'},{hex:'#C4C8D4',name:'Голубоватый'},
+  {hex:'#D4C8C8',name:'Розоватый'},{hex:'#CCC4B8',name:'Бежевый'},
+];
+const MOLD_COLORS = [
+  {hex:'#F8F4EE',name:'Белый'},{hex:'#E8E0D0',name:'Кремовый'},
+  {hex:'#C8B890',name:'Золото'},{hex:'#8B7B5A',name:'Орех'},
+  {hex:'#6B4C2A',name:'Тёмный дуб'},{hex:'#2A2A2A',name:'Чёрный'},
+  {hex:'#A0A8A0',name:'Серый'},{hex:'#C0B090',name:'Латунь'},
+];
+
+const FLOOR_MATS = [
+  {id:'oak',name:'Дуб',sub:'Натуральный',colors:['#8B6840','#9B7850','#7A5A35','#A07848'],type:'wood'},
+  {id:'ash',name:'Ясень',sub:'Беленый',colors:['#D4B896','#C8A880','#DCB89C','#C0A070'],type:'wood'},
+  {id:'walnut',name:'Орех',sub:'Тёмный',colors:['#4A3020','#5A3A28','#3A2818','#6A4030'],type:'wood'},
+  {id:'wenge',name:'Венге',sub:'Экзотика',colors:['#2A1C14','#3A2418','#1A1008','#4A2C1E'],type:'dark-wood'},
+  {id:'herringbone',name:'Ёлочка',sub:'Паркет',colors:['#8B6840','#9B7850','#7A5A35'],type:'herringbone'},
+  {id:'marble-w',name:'Мрамор',sub:'Каррара',colors:['#F0ECE8','#E8E0D8','#DEDBD4'],type:'marble',light:true},
+  {id:'marble-g',name:'Мрамор',sub:'Серый',colors:['#C8C4C0','#B8B4B0','#D0CCC8'],type:'marble-g'},
+  {id:'marble-d',name:'Мрамор',sub:'Маркина тёмный',colors:['#2a2420','#3a2e28','#1a1810'],type:'marble-d'},
+  {id:'marble-b',name:'Мрамор',sub:'Бежевый',colors:['#E0D0BC','#D4C4A8','#C8B898'],type:'marble-b'},
+  {id:'tiles-w',name:'Плитка',sub:'Белая',colors:['#F0EDED','#E8E5E2','#DEDAD6'],type:'tiles',light:true},
+  {id:'tiles-g',name:'Плитка',sub:'Серая',colors:['#B0ACAA','#A0A09E','#C0BCB8'],type:'tiles-g'},
+  {id:'tiles-h',name:'Плитка',sub:'Соты',colors:['#D8D0C4','#C8C0B4','#E0D8CC'],type:'hex'},
+  {id:'concrete',name:'Бетон',sub:'Микроцемент',colors:['#A8A8A8','#989898','#B8B8B8'],type:'concrete'},
+  {id:'epoxy',name:'Эпоксид',sub:'Светлый',colors:['#D8D0C4','#E0D8CC'],type:'epoxy'},
+  {id:'carpet',name:'Ковролин',sub:'Шерстяной',colors:['#D0C8C0','#A8A090','#C0B8B0','#8A7868'],type:'carpet'},
+];
+
+// ═══════════════════════════════════════════════════════
+//  MATERIAL HELPERS
+// ═══════════════════════════════════════════════════════
+function mkTex(fn,rep=4){
+  const c=document.createElement('canvas'); c.width=c.height=256;
+  const x=c.getContext('2d'); fn(x,c);
+  const t=new THREE.CanvasTexture(c);
+  t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(rep,rep);
+  return t;
+}
+
+const texCache={};
+function getFloorTex(id,colorHex){
+  const key=id+'_'+colorHex;
+  if(texCache[key]) return texCache[key];
+  const mat=FLOOR_MATS.find(m=>m.id===id);
+  const col=colorHex||mat.colors[0];
+  const t=mkTex((ctx,cv)=>{
+    if(mat.type==='wood'||mat.type==='dark-wood'){
+      const planks=['#8B6840','#9B7850','#7A5A35','#A07848'];
+      const c2=col;
+      const base=hexToRgb(c2);
+      for(let y=0;y<256;y+=30){
+        const off=(Math.floor(y/30)%2)*40;
+        for(let x=0;x<256;x+=60){
+          const v=Math.random()*20-10;
+          ctx.fillStyle=rgbStr(base.r+v,base.g+v*0.8,base.b+v*0.6);
+          ctx.fillRect(x+off,y,59,29);
+          ctx.strokeStyle='rgba(0,0,0,0.1)'; ctx.lineWidth=1;
+          ctx.strokeRect(x+off+0.5,y+0.5,58,28);
+          // grain lines
+          ctx.strokeStyle=`rgba(0,0,0,${0.03+Math.random()*0.04})`;
+          ctx.lineWidth=0.5;
+          for(let g=0;g<3;g++){
+            const gx=x+off+Math.random()*58;
+            ctx.beginPath(); ctx.moveTo(gx,y); ctx.lineTo(gx+Math.random()*6-3,y+29); ctx.stroke();
+          }
+        }
+      }
+    } else if(mat.type==='herringbone'){
+      const base=hexToRgb(col);
+      const size=24;
+      for(let row=0;row<20;row++){
+        for(let col2=0;col2<20;col2++){
+          const v=Math.random()*25-12;
+          ctx.save(); ctx.translate(col2*size*2,row*size);
+          if((row+col2)%2===0){
+            ctx.fillStyle=rgbStr(base.r+v,base.g+v*0.8,base.b+v*0.6);
+            ctx.fillRect(0,0,size*2-1,size/2-1);
+          } else {
+            ctx.fillStyle=rgbStr(base.r+v,base.g+v*0.8,base.b+v*0.6);
+            ctx.save(); ctx.translate(size,size/4);
+            ctx.rotate(Math.PI/2);
+            ctx.fillRect(-size/4,0,size/2-1,size*2-1);
+            ctx.restore();
+          }
+          ctx.restore();
+        }
+      }
+    } else if(mat.type==='marble'||mat.type==='marble-g'||mat.type==='marble-d'||mat.type==='marble-b'){
+      const base=hexToRgb(col);
+      ctx.fillStyle=col; ctx.fillRect(0,0,256,256);
+      const isLight=mat.type==='marble'||mat.type==='marble-b';
+      const veinColor=isLight?'rgba(0,0,0,0.08)':'rgba(255,255,255,0.08)';
+      for(let i=0;i<30;i++){
+        ctx.strokeStyle=veinColor.replace('0.08',String(0.04+Math.random()*0.1));
+        ctx.lineWidth=0.5+Math.random()*1.5;
+        ctx.beginPath(); ctx.moveTo(Math.random()*256,0);
+        ctx.bezierCurveTo(Math.random()*256,Math.random()*256,Math.random()*256,Math.random()*256,Math.random()*256,256);
+        ctx.stroke();
+      }
+      // subtle gradient
+      const grad=ctx.createLinearGradient(0,0,256,256);
+      grad.addColorStop(0,'rgba(255,255,255,0.05)'); grad.addColorStop(1,'rgba(0,0,0,0.05)');
+      ctx.fillStyle=grad; ctx.fillRect(0,0,256,256);
+    } else if(mat.type==='tiles'||mat.type==='tiles-g'){
+      const base=hexToRgb(col);
+      const sz=48;
+      for(let y=0;y<256;y+=sz) for(let x=0;x<256;x+=sz){
+        const v=Math.random()*8-4;
+        ctx.fillStyle=rgbStr(base.r+v,base.g+v,base.b+v);
+        ctx.fillRect(x,y,sz,sz);
+        ctx.strokeStyle='rgba(0,0,0,0.12)'; ctx.lineWidth=1.5;
+        ctx.strokeRect(x+1,y+1,sz-2,sz-2);
+      }
+    } else if(mat.type==='hex'){
+      const base=hexToRgb(col);
+      const r=20, h=r*Math.sqrt(3);
+      for(let row=0;row<10;row++){
+        for(let col3=0;col3<10;col3++){
+          const cx=col3*r*1.5+(row%2)*r*0.75, cy=row*h*0.5;
+          const v=Math.random()*10-5;
+          ctx.fillStyle=rgbStr(base.r+v,base.g+v,base.b+v);
+          ctx.beginPath();
+          for(let i=0;i<6;i++){
+            const ang=Math.PI/180*(60*i-30);
+            i===0?ctx.moveTo(cx+r*Math.cos(ang),cy+r*Math.sin(ang)):ctx.lineTo(cx+r*Math.cos(ang),cy+r*Math.sin(ang));
+          }
+          ctx.closePath(); ctx.fill();
+          ctx.strokeStyle='rgba(0,0,0,0.1)'; ctx.lineWidth=0.8; ctx.stroke();
+        }
+      }
+    } else if(mat.type==='concrete'){
+      const base=hexToRgb(col);
+      ctx.fillStyle=col; ctx.fillRect(0,0,256,256);
+      for(let i=0;i<2000;i++){
+        const v=Math.random()*30-15;
+        ctx.fillStyle=`rgba(${Math.round(base.r+v)},${Math.round(base.g+v)},${Math.round(base.b+v)},${0.02+Math.random()*0.05})`;
+        ctx.fillRect(Math.random()*256,Math.random()*256,Math.random()*10+1,Math.random()*4+1);
+      }
+    } else if(mat.type==='carpet'){
+      const base=hexToRgb(col);
+      ctx.fillStyle=col; ctx.fillRect(0,0,256,256);
+      for(let i=0;i<3000;i++){
+        const v=Math.random()*20-10;
+        ctx.strokeStyle=`rgba(${Math.round(base.r+v)},${Math.round(base.g+v)},${Math.round(base.b+v)},0.4)`;
+        ctx.lineWidth=0.5;
+        const px=Math.random()*256, py=Math.random()*256;
+        ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(px+Math.random()*3-1.5,py+Math.random()*3-1.5); ctx.stroke();
+      }
+    } else if(mat.type==='epoxy'){
+      const base=hexToRgb(col);
+      ctx.fillStyle=col; ctx.fillRect(0,0,256,256);
+      const grad=ctx.createRadialGradient(128,128,0,128,128,128);
+      grad.addColorStop(0,'rgba(255,255,255,0.12)'); grad.addColorStop(1,'rgba(0,0,0,0.05)');
+      ctx.fillStyle=grad; ctx.fillRect(0,0,256,256);
+    }
+  },4);
+  texCache[key]=t;
+  return t;
+}
+
+function hexToRgb(hex){
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return {r,g,b};
+}
+function rgbStr(r,g,b){
+  return `rgb(${Math.max(0,Math.min(255,Math.round(r)))},${Math.max(0,Math.min(255,Math.round(g)))},${Math.max(0,Math.min(255,Math.round(b)))})`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  SCENE MATERIALS
+// ═══════════════════════════════════════════════════════
+const wallMat  = new THREE.MeshStandardMaterial({color:0xF7F3EC, roughness:0.9, metalness:0});
+const ceilMat  = new THREE.MeshStandardMaterial({color:0xFFFFFF, roughness:0.95, metalness:0});
+const floorMat = new THREE.MeshStandardMaterial({color:0x8B6840, roughness:0.6, metalness:0});
+const moldMat  = new THREE.MeshStandardMaterial({color:0xF8F4EE, roughness:0.8, metalness:0});
+floorMat.map   = getFloorTex('oak','#8B6840');
+floorMat.needsUpdate = true;
+
+// ═══════════════════════════════════════════════════════
+//  ROOM GEOMETRY
+// ═══════════════════════════════════════════════════════
+const roomGroup = new THREE.Group(); scene.add(roomGroup);
+let ROOM = {w:9, h:3.0, d:8};
+
+const meshRefs = {};
+
+function buildRoom(){
+  roomGroup.clear();
+  scene.background = new THREE.Color('#c0b8b0');
+
+  const {w,h,d} = ROOM;
+  function addM(geo,mat,px,py,pz,shadow=true){
+    const m=new THREE.Mesh(geo,mat);
+    m.position.set(px,py,pz);
+    if(shadow){m.castShadow=true; m.receiveShadow=true;}
+    roomGroup.add(m);
+    return m;
+  }
+
+  // Floor
+  meshRefs.floor = addM(new THREE.BoxGeometry(w,0.1,d), floorMat, 0,-0.05,0);
+  // Back wall
+  meshRefs.backWall = addM(new THREE.BoxGeometry(w,h,0.12), wallMat, 0,h/2,-d/2);
+  // Left wall
+  meshRefs.leftWall = addM(new THREE.BoxGeometry(0.12,h,d), wallMat, -w/2,h/2,0);
+  // Right wall
+  meshRefs.rightWall = addM(new THREE.BoxGeometry(0.12,h,d), wallMat, w/2,h/2,0);
+  // Ceiling
+  meshRefs.ceil = addM(new THREE.BoxGeometry(w,0.1,d), ceilMat, 0,h+0.05,0);
+
+  // Baseboard back
+  addM(new THREE.BoxGeometry(w,0.09,0.05), moldMat, 0,0.045,-d/2+0.06);
+  addM(new THREE.BoxGeometry(0.05,0.09,d), moldMat, -w/2+0.06,0.045,0);
+  addM(new THREE.BoxGeometry(0.05,0.09,d), moldMat, w/2-0.06,0.045,0);
+  // Crown molding
+  addM(new THREE.BoxGeometry(w,0.07,0.07), moldMat, 0,h-0.035,-d/2+0.035);
+  addM(new THREE.BoxGeometry(0.07,0.07,d), moldMat, -w/2+0.035,h-0.035,0);
+  addM(new THREE.BoxGeometry(0.07,0.07,d), moldMat, w/2-0.035,h-0.035,0);
+
+  // Window
+  addWindow(w,h,d);
+}
+
+function addWindow(w,h,d){
+  const fMat = new THREE.MeshStandardMaterial({color:0xF8F4EE, roughness:0.7});
+  const gMat = new THREE.MeshStandardMaterial({color:0x88CCFF, transparent:true, opacity:0.12, metalness:0.1, roughness:0.0});
+  const add=(gw,gh,gd,px,py,pz)=>{ const m=new THREE.Mesh(new THREE.BoxGeometry(gw,gh,gd),fMat); m.position.set(px,py,pz); roomGroup.add(m); };
+  add(2.8,0.09,0.18, 0, 2.8, -d/2+0.06);
+  add(2.8,0.09,0.18, 0, 1.2, -d/2+0.06);
+  add(0.09,1.6,0.18, -1.36,2.0,-d/2+0.06);
+  add(0.09,1.6,0.18,  1.36,2.0,-d/2+0.06);
+  add(0.09,1.6,0.18, 0, 2.0, -d/2+0.06);
+  [-0.65,0.65].forEach(x=>{
+    const g=new THREE.Mesh(new THREE.PlaneGeometry(1.15,1.5),gMat);
+    g.position.set(x,2.0,-d/2+0.04); roomGroup.add(g);
+  });
+  // Window sill
+  const sm=new THREE.MeshStandardMaterial({color:0xF0ECE4,roughness:0.6});
+  const sill=new THREE.Mesh(new THREE.BoxGeometry(3.0,0.06,0.25),sm);
+  sill.position.set(0,1.17,-d/2+0.12); roomGroup.add(sill);
+  // Light shaft
+  const shaft=new THREE.SpotLight(0xfff6dc,1.2,12,Math.PI/6,0.5);
+  shaft.position.set(0,3,-d/2+2); shaft.castShadow=false;
+  shaft.target.position.set(0,0,1);
+  roomGroup.add(shaft); roomGroup.add(shaft.target);
+}
+
+// ═══════════════════════════════════════════════════════
+//  FURNITURE SYSTEM
+// ═══════════════════════════════════════════════════════
+const furnGroup = new THREE.Group(); scene.add(furnGroup);
+let activeRoom = 'living';
+let furnState = {};
+let selectedFurnKey = null;
+
+const FURN_DEFS = {
+  living:[
+    {key:'sofa',    label:'Диван',           icon:'🛋️', visible:true,  styles:['Классика','Модерн','Лофт'],  colors:['#8878C0','#C07858','#7090A0','#808080','#3A3A3A','#C0A080','#708060','#A06860']},
+    {key:'armchair',label:'Кресло',          icon:'🪑', visible:true,  styles:['Классика','Модерн','Скандинав'], colors:['#9888D0','#B06848','#6080A0','#909090','#4A4A4A','#B09070','#608050','#906050']},
+    {key:'table',   label:'Стол журнальный', icon:'🪵', visible:true,  styles:['Стекло','Дерево','Мрамор'],  colors:['#8B6840','#C8A880','#F0ECE8','#D4C4A8','#3A3A3A','#C0B090','#A08060','#FFFFFF']},
+    {key:'tv',      label:'ТВ стенд',        icon:'📺', visible:true,  styles:['Навесной','Стенд','С витриной'], colors:['#2A2A2A','#F8F4EE','#8B6840','#C8A880','#4A3A2A','#A0A0A0','#3A3530','#E0D8C8']},
+    {key:'rug',     label:'Ковёр',           icon:'🔲', visible:true,  styles:['Однотонный','Геометрия','Ворсистый'], colors:['#C4B8E8','#D4C0A8','#A0B8A0','#D8C0B8','#C0C8D8','#B8B8B8','#E8D8C8','#A8A8C0']},
+    {key:'plant',   label:'Растение',        icon:'🪴', visible:true,  styles:['Пальма','Фикус','Кактус'],   colors:['#4A7A30','#3A6B30','#5A8A40']},
+    {key:'lamp',    label:'Торшер',          icon:'💡', visible:false, styles:['Дуга','Классика','Лофт'],    colors:['#C0B090','#2A2A2A','#F8F4EE','#8B6840']},
+    {key:'shelves', label:'Полка на стене',  icon:'📚', visible:false, styles:['Плавающая','Система','Лофт'], colors:['#8B6840','#F8F4EE','#2A2A2A','#C8A880']},
+  ],
+  bedroom:[
+    {key:'bed',      label:'Кровать',       icon:'🛏️', visible:true,  styles:['Классика','Платформа','С балдахином'], colors:['#F8F4EE','#8B6840','#4A4A4A','#D4C4A8','#A09080','#C0A890','#3A3530','#E8E0D0']},
+    {key:'wardrobe', label:'Шкаф',          icon:'🚪', visible:true,  styles:['Купе','Распашной','Встроенный'], colors:['#F8F4EE','#E8E0D0','#8B6840','#2A2A2A','#C8A880','#A0A0A0','#D4C4A8','#3A3530']},
+    {key:'dresser',  label:'Комод',         icon:'🗄️', visible:true,  styles:['Классика','Модерн','Скандинав'], colors:['#F8F4EE','#8B6840','#2A2A2A','#C8A880','#E8E0D0']},
+    {key:'mirror',   label:'Зеркало',       icon:'🪞', visible:true,  styles:['В раме','Во всю стену','Арочное'], colors:['#C0B090','#2A2A2A','#8B6840','#F8F4EE']},
+    {key:'plant',    label:'Растение',      icon:'🪴', visible:false, styles:['Пальма','Фикус','Кактус'],   colors:['#4A7A30','#3A6B30','#5A8A40']},
+    {key:'lamp',     label:'Торшер',        icon:'💡', visible:true,  styles:['Дуга','Классика','Минимал'], colors:['#C0B090','#2A2A2A','#F8F4EE','#8B6840']},
+    {key:'rug',      label:'Прикроватный ковёр', icon:'🔲', visible:true, styles:['Пушистый','Джутовый','Хлопок'], colors:['#E0D8CC','#C8C0B8','#A0B8A0','#D8C8B8']},
+  ],
+  kitchen:[
+    {key:'counter',  label:'Гарнитур',       icon:'🍳', visible:true,  styles:['Классика','Модерн','Шейкер'], colors:['#F8F4EE','#2A2A2A','#8B6840','#A0B0A0','#C8D0D8','#D4C4A8','#3A3530','#C0B890']},
+    {key:'island',   label:'Остров',         icon:'🏝️', visible:false, styles:['Открытый','Закрытый','С баром'], colors:['#F8F4EE','#2A2A2A','#8B6840','#C8A880']},
+    {key:'dining',   label:'Обеденная зона', icon:'🍽️', visible:true,  styles:['Прямоугольный','Круглый','Барная стойка'], colors:['#8B6840','#F8F4EE','#2A2A2A','#C8A880','#A08060']},
+    {key:'plant',    label:'Зелень',         icon:'🌿', visible:true,  styles:['Трав. горшки','Подвесные','Фитостена'], colors:['#4A7A30','#3A6B30']},
+    {key:'pendant',  label:'Подвесные светильники', icon:'💡', visible:true, styles:['Шар','Конус','Индустриал'], colors:['#C0B090','#2A2A2A','#F8F4EE','#8B6840','#D4A050']},
+  ],
+  office:[
+    {key:'desk',     label:'Рабочий стол',   icon:'💻', visible:true,  styles:['Прямой','Угловой','С тумбой'], colors:['#2A2A2A','#8B6840','#F8F4EE','#C8A880','#3A3530']},
+    {key:'chair',    label:'Кресло',         icon:'🪑', visible:true,  styles:['Эргономичное','Классика','Барный стул'], colors:['#2A2A2A','#8B6840','#F8F4EE','#3A3A3A','#808080','#4A3A2A']},
+    {key:'shelf',    label:'Стеллаж',        icon:'📚', visible:true,  styles:['Открытый','Закрытый','Навесной'], colors:['#2A2A2A','#F8F4EE','#8B6840','#C8A880','#A0A0A0']},
+    {key:'plant',    label:'Растение',       icon:'🪴', visible:true,  styles:['Крупное','Суккуленты','Мох-стена'], colors:['#4A7A30','#3A6B30','#5A8A40']},
+    {key:'sofa',     label:'Переговорный диван', icon:'🛋️', visible:false, styles:['2-местный','3-местный'], colors:['#8878C0','#808080','#3A3A3A','#C0A080']},
+  ],
+  dining:[
+    {key:'dining-table', label:'Обеденный стол',  icon:'🍽️', visible:true,  styles:['Прямоугольный','Круглый','Раскладной'], colors:['#8B6840','#F8F4EE','#2A2A2A','#C8A880','#3A3530']},
+    {key:'chairs6',      label:'Стулья (6 шт)',   icon:'🪑', visible:true,  styles:['Мягкие','Деревянные','Пластик'], colors:['#F8F4EE','#2A2A2A','#8B6840','#808080','#C0A880','#A06860']},
+    {key:'sideboard',    label:'Сервант',          icon:'🗄️', visible:true,  styles:['Классика','Модерн','Лофт'], colors:['#8B6840','#F8F4EE','#2A2A2A','#C8A880']},
+    {key:'plant',        label:'Растение',         icon:'🪴', visible:false, styles:['Высокое','Маленькое'], colors:['#4A7A30','#3A6B30']},
+    {key:'chandelier',   label:'Люстра',           icon:'✨', visible:true,  styles:['Классика','Модерн','Кристалл'], colors:['#C0B090','#F8F4EE','#2A2A2A','#D4A050']},
+  ],
+};
+
+const furnEditState = {};
+function initFurnState(room){
+  furnState={};
+  FURN_DEFS[room].forEach(f=>{
+    furnState[f.key]={visible:f.visible};
+    if(!furnEditState[room]) furnEditState[room]={};
+    if(!furnEditState[room][f.key]) furnEditState[room][f.key]={color:f.colors[0], style:f.styles[0]};
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  FURNITURE BUILDERS
+// ═══════════════════════════════════════════════════════
+function hex2col(hex){ return parseInt(hex.replace('#',''),16); }
+function mk(w,h,d,col,px,py,pz,rough=0.8,metal=0,shadow=true){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color:hex2col(col),roughness:rough,metalness:metal}));
+  m.position.set(px,py,pz); if(shadow){m.castShadow=true;m.receiveShadow=true;} return m;
+}
+function mka(geo,col,rough=0.8,metal=0){ return new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:hex2col(col),roughness:rough,metalness:metal})); }
+
+function buildSofa(g,st,col){
+  const c1=col, c2=shadeColor(col,-15), arm=shadeColor(col,-5);
+  // Base
+  g.add(mk(2.5,0.45,0.95,c1, 0,0.22, 0.1)); // seat
+  g.add(mk(2.5,0.55,0.27,c2, 0,0.72, 0.43)); // back
+  g.add(mk(0.32,0.72,0.95,arm, -1.09,0.36,0.1)); // left arm
+  g.add(mk(0.32,0.72,0.95,arm,  1.09,0.36,0.1)); // right arm
+  // Cushions
+  [-0.9,0.0,0.9].forEach(x=>g.add(mk(0.75,0.22,0.85,shadeColor(col,10),x,0.57,0.05)));
+  // Pillows on back
+  [-0.6,0.6].forEach(x=>g.add(mk(0.45,0.35,0.12,shadeColor(col,20),x,0.75,0.31)));
+  // Legs
+  [[-1.0,0.42],[-1.0,-0.42],[1.0,0.42],[1.0,-0.42]].forEach(([lx,lz])=>{
+    const leg=mka(new THREE.CylinderGeometry(0.04,0.04,0.12,8),'#C0B090',0.3,0.7);
+    leg.position.set(lx,0.06,0.1+lz); g.add(leg);
+  });
+}
+
+function buildArmchair(g,st,col){
+  g.add(mk(1.0,0.4,0.9,col,0,0.2,0.0));
+  g.add(mk(1.0,0.5,0.22,shadeColor(col,-10),0,0.65,0.39));
+  g.add(mk(0.22,0.58,0.9,shadeColor(col,-5),-0.39,0.29,0.0));
+  g.add(mk(0.22,0.58,0.9,shadeColor(col,-5), 0.39,0.29,0.0));
+  g.add(mk(0.85,0.18,0.78,shadeColor(col,8),0,0.49,-0.02));
+  [[-0.38,0.38],[-0.38,-0.38],[0.38,0.38],[0.38,-0.38]].forEach(([lx,lz])=>{
+    const leg=mka(new THREE.CylinderGeometry(0.035,0.035,0.1,8),'#C0B090',0.3,0.7);
+    leg.position.set(lx,0.05,lz); g.add(leg);
+  });
+}
+
+function buildTable(g,st,col){
+  if(st==='Стекло'){
+    const top=mka(new THREE.BoxGeometry(1.1,0.06,0.65),col,0.05,0.08);
+    top.position.set(0,0.43,0.3); g.add(top);
+    [[-0.4,0.12],[0.4,0.12],[-0.4,0.48],[0.4,0.48]].forEach(([lx,lz])=>{
+      const leg=mka(new THREE.CylinderGeometry(0.03,0.03,0.43,8),col,0.2,0.5);
+      leg.position.set(lx,0.215,lz); g.add(leg);
+    });
+  } else if(st==='Мрамор'){
+    g.add(mk(1.1,0.06,0.65,'#F0ECE8',0,0.43,0.3,0.2,0.05));
+    const base=mka(new THREE.CylinderGeometry(0.06,0.12,0.43,6),'#C0B090',0.3,0.6);
+    base.position.set(0,0.215,0.3); g.add(base);
+  } else {
+    g.add(mk(1.1,0.06,0.65,col,0,0.43,0.3));
+    [[-0.4,0.12],[0.4,0.12],[-0.4,0.48],[0.4,0.48]].forEach(([lx,lz])=>{
+      g.add(mk(0.06,0.43,0.06,shadeColor(col,-15),lx,0.215,lz));
+    });
+  }
+}
+
+function buildTV(g,st,col){
+  if(st==='Навесной'){
+    g.add(mk(2.4,0.55,0.35,col,0,0.27,-3.2));
+    const screen=mk(1.8,1.0,0.05,'#101015',0,1.1,-3.1,0.2,0.3);
+    g.add(screen);
+    g.add(mk(0.05,0.38,0.05,'#C0B090',0,0.73,-3.12,0.3,0.6));
+  } else if(st==='С витриной'){
+    g.add(mk(3.0,0.52,0.42,col,0,0.26,-3.2));
+    g.add(mk(0.04,1.9,0.42,col,-1.48,0.95,-3.2));
+    g.add(mk(0.04,1.9,0.42,col, 1.48,0.95,-3.2));
+    g.add(mk(3.0,0.04,0.42,col,0,1.92,-3.2));
+    const screen=mk(1.7,0.95,0.05,'#101015',0,1.05,-3.04,0.2,0.3);
+    g.add(screen);
+    // glass doors hint
+    [-0.9,0.9].forEach(x=>{
+      const glass=mka(new THREE.BoxGeometry(0.9,1.8,0.04),'#88CCFF',0.05,0.1);
+      glass.material.transparent=true; glass.material.opacity=0.2;
+      glass.position.set(x,1.44,-3.0); g.add(glass);
+    });
+  } else {
+    g.add(mk(2.4,0.52,0.42,col,0,0.26,-3.2));
+    g.add(mk(0.04,0.52,0.42,col,-1.18,0.26,-3.2));
+    g.add(mk(0.04,0.52,0.42,col, 1.18,0.26,-3.2));
+    const screen=mk(1.7,0.95,0.05,'#101015',0,1.02,-3.1,0.2,0.3);
+    g.add(screen);
+    g.add(mk(0.05,0.35,0.05,'#C0B090',0,0.68,-3.1,0.3,0.6));
+    g.add(mk(0.42,0.04,0.18,'#C0B090',0,0.51,-3.02,0.3,0.6));
+  }
+}
+
+function buildRug(g,st,col){
+  const rugH=st==='Ворсистый'?0.025:0.012;
+  const rugMat=new THREE.MeshStandardMaterial({color:hex2col(col),roughness:st==='Ворсистый'?1.0:0.85,metalness:0});
+  const rug=new THREE.Mesh(new THREE.BoxGeometry(3.2,rugH,2.4),rugMat);
+  rug.position.set(0,rugH/2,0.5); rug.receiveShadow=true; g.add(rug);
+  if(st==='Геометрия'){
+    const border=new THREE.Mesh(new THREE.BoxGeometry(3.0,rugH+0.002,2.2),new THREE.MeshStandardMaterial({color:hex2col(shadeColor(col,-20)),roughness:0.9}));
+    border.position.set(0,rugH/2+0.001,0.5); g.add(border);
+    const inner=new THREE.Mesh(new THREE.BoxGeometry(2.6,rugH+0.003,1.8),rugMat);
+    inner.position.set(0,rugH/2+0.002,0.5); g.add(inner);
+  }
+}
+
+function buildPlant(g,st,x=-3.2,z=-2.5){
+  const potC='#D4A070';
+  if(st==='Пальма'||st==='Крупное'){
+    const pot=mka(new THREE.CylinderGeometry(0.2,0.15,0.35,12),potC,0.8);
+    pot.position.set(x,0.175,z); g.add(pot);
+    g.add(mk(0.08,1.4,0.08,'#6B4C2A',x,0.9,z,0.9));
+    for(let i=0;i<6;i++){
+      const ang=(i/6)*Math.PI*2, r=0.6+Math.random()*0.3;
+      const leaf=mka(new THREE.BoxGeometry(0.06,0.04,0.7+Math.random()*0.4),'#3A7030',1);
+      leaf.position.set(x+Math.cos(ang)*r*0.5, 1.5+Math.random()*0.3, z+Math.sin(ang)*r*0.5);
+      leaf.rotation.set(Math.cos(ang)*0.5,ang,0); g.add(leaf);
+    }
+  } else if(st==='Кактус'||st==='Суккуленты'){
+    const pot=mka(new THREE.CylinderGeometry(0.15,0.12,0.22,8),'#C48060',0.8);
+    pot.position.set(x,0.11,z); g.add(pot);
+    const body=mka(new THREE.CylinderGeometry(0.1,0.09,0.35,8),'#5A8A30',0.9);
+    body.position.set(x,0.4,z); g.add(body);
+  } else {
+    const pot=mka(new THREE.CylinderGeometry(0.17,0.13,0.28,12),potC,0.8);
+    pot.position.set(x,0.14,z); g.add(pot);
+    for(let i=0;i<5;i++){
+      const leaf=mka(new THREE.BoxGeometry(0.07,0.45+Math.random()*0.25,0.04),'#3A6B30',1);
+      leaf.position.set(x+(Math.random()-0.5)*0.18, 0.42+Math.random()*0.15, z+(Math.random()-0.5)*0.18);
+      leaf.rotation.z=(Math.random()-0.5)*0.7; leaf.rotation.x=(Math.random()-0.5)*0.4; g.add(leaf);
+    }
+  }
+}
+
+function buildLamp(g,st,col,x=2.8,z=0.5){
+  if(st==='Дуга'){
+    const base=mka(new THREE.BoxGeometry(0.5,0.06,0.5),col,0.4,0.6);
+    base.position.set(x,0.03,z); g.add(base);
+    g.add(mk(0.05,1.6,0.05,col,x,0.83,z,0.3,0.6));
+    g.add(mk(1.0,0.05,0.05,col,x-0.5,1.65,z,0.3,0.6));
+    const shade=mka(new THREE.CylinderGeometry(0.28,0.2,0.3,12),'#F8F0DC',0.8);
+    shade.position.set(x-1.0,1.65,z); g.add(shade);
+    const pl=new THREE.PointLight(0xFFE080,0.7,4); pl.position.set(x-1.0,1.5,z); g.add(pl);
+  } else if(st==='Лофт'){
+    g.add(mk(0.08,1.5,0.08,col,x,0.75,z,0.3,0.7));
+    const cage=mka(new THREE.SphereGeometry(0.25,8,8),col,0.4,0.7);
+    cage.position.set(x,1.65,z); g.add(cage);
+    const pl=new THREE.PointLight(0xFFE060,0.8,4); pl.position.set(x,1.6,z); g.add(pl);
+  } else {
+    g.add(mk(0.12,1.5,0.12,col,x,0.75,z,0.3,0.6));
+    const shade=mka(new THREE.CylinderGeometry(0.32,0.22,0.32,16),'#F8F0DC',0.9);
+    shade.position.set(x,1.68,z); shade.castShadow=true; g.add(shade);
+    const pl=new THREE.PointLight(0xFFE080,0.8,4); pl.position.set(x,1.55,z); g.add(pl);
+  }
+}
+
+function buildShelves(g,st,col){
+  if(st==='Система'){
+    g.add(mk(0.04,1.8,0.28,col,-3.2,0.9,-2.0));
+    g.add(mk(0.04,1.8,0.28,col,-1.6,0.9,-2.0));
+    [0.3,0.78,1.26,1.74].forEach(y=>{
+      g.add(mk(1.6,0.04,0.28,col,-2.4,y,-2.0));
+    });
+  } else if(st==='Лофт'){
+    [0.5,1.1,1.7].forEach(y=>{
+      g.add(mk(2.0,0.04,0.22,col,-2.4,y,-3.12));
+      g.add(mk(0.04,y,0.06,'#C0B090',-3.4,y/2,-3.05,0.3,0.7));
+      g.add(mk(0.04,y,0.06,'#C0B090',-1.4,y/2,-3.05,0.3,0.7));
+    });
+  } else {
+    [0.5,1.0,1.5].forEach(y=>{
+      g.add(mk(2.2,0.05,0.24,col,-2.3,y,-3.12));
+    });
+  }
+}
+
+function buildBed(g,st,col){
+  const fw=2.1, fd=2.3;
+  // Frame
+  g.add(mk(fw,0.2,fd,shadeColor(col,-10),0,0.1,0.5));
+  if(st==='С балдахином'){
+    // Posts
+    [[-fw/2-0.02,0.5+fd/2],[-fw/2-0.02,0.5-fd/2],[fw/2+0.02,0.5+fd/2],[fw/2+0.02,0.5-fd/2]].forEach(([px,pz])=>{
+      g.add(mk(0.07,2.2,0.07,shadeColor(col,-15),px,1.1,pz));
+    });
+    // Top rails
+    [0.5-fd/2,0.5+fd/2].forEach(pz=>g.add(mk(fw+0.1,0.05,0.05,shadeColor(col,-15),0,2.2,pz)));
+    [-fw/2,fw/2].forEach(px=>g.add(mk(0.05,0.05,fd,shadeColor(col,-15),px,2.2,0.5)));
+  }
+  // Headboard
+  if(st==='С балдахином'||st==='Классика'){
+    g.add(mk(fw,1.0,0.12,col,0,0.7,0.5-fd/2-0.02));
+    g.add(mk(fw-0.3,0.7,0.06,shadeColor(col,10),0,0.6,0.5-fd/2+0.03));
+  } else { // Платформа
+    g.add(mk(fw,0.65,0.1,col,0,0.52,0.5-fd/2-0.01));
+  }
+  // Footboard
+  g.add(mk(fw,0.35,0.1,shadeColor(col,-5),0,0.37,0.5+fd/2+0.01));
+  // Mattress
+  g.add(mk(fw-0.1,0.3,fd-0.1,'#F8F4EE',0,0.35,0.5,0.9));
+  // Bedding
+  g.add(mk(fw-0.14,0.28,fd*0.65,'#FFFFFF',0,0.54,0.5+0.28,0.95));
+  // Pillows
+  [-0.5,0.5].forEach(x=>{
+    g.add(mk(0.65,0.18,0.45,'#FFFFFF',x,0.64,0.5-fd/2+0.35,0.95));
+  });
+}
+
+function buildWardrobe(g,st,col){
+  const ww=2.4, wh=2.3, wd=0.62;
+  g.add(mk(ww,wh,wd,col,-1.5,wh/2,-3.1));
+  if(st==='Купе'){
+    g.add(mk(0.04,wh-0.1,wd-0.02,'#D4D0CC',-1.5,wh/2,-3.1,0.1,0.1));
+    [-0.75,0.75].forEach(x=>{
+      g.add(mk(0.04,wh-0.06,wd*0.95,shadeColor(col,5),-1.5+x,wh/2,-3.1,0.08,0.05));
+      g.add(mk(0.04,0.2,0.04,'#C0B090',-1.5+x,wh/2,-2.79,0.3,0.7));
+    });
+  } else if(st==='Встроенный'){
+    g.add(mk(0.04,wh,wd,col,-2.7,wh/2,-3.1));
+    g.add(mk(0.04,wh,wd,col,-0.3,wh/2,-3.1));
+    [-2.1,-1.5,-0.9].forEach(x=>g.add(mk(0.04,0.2,0.04,'#C0B090',x,wh*0.5,-2.79,0.3,0.7)));
+  } else {
+    [[-0.8,0],[0.8,0]].forEach(([x])=>{
+      g.add(mk(0.04,wh-0.1,wd-0.01,shadeColor(col,3),-1.5+x,wh/2,-3.1,0.1,0.0));
+      g.add(mk(0.04,0.22,0.04,'#C0B090',-1.5+x,wh/2,-2.79,0.3,0.7));
+    });
+  }
+}
+
+function buildDresser(g,st,col){
+  g.add(mk(1.2,0.9,0.5,col,2.2,0.45,-2.9));
+  g.add(mk(1.15,0.04,0.48,shadeColor(col,5),2.2,0.92,-2.9));
+  [0.25,0.6].forEach(y=>{
+    g.add(mk(1.1,0.26,0.46,shadeColor(col,-5),2.2,y,-2.9));
+    g.add(mk(0.06,0.06,0.06,'#C0B090',2.2,y,-2.66,0.3,0.7));
+  });
+}
+
+function buildMirror(g,st,col){
+  const fW=0.06;
+  g.add(mk(1.1+fW*2,1.8+fW*2,0.06,col,2.5,1.6,-3.12));
+  const glass=mka(new THREE.BoxGeometry(1.1,1.8,0.04),'#88CCFF',0.0,0.15);
+  glass.material.transparent=true; glass.material.opacity=0.3;
+  glass.position.set(2.5,1.6,-3.1); g.add(glass);
+}
+
+function buildCounter(g,st,col){
+  const cW=3.6,cH=0.92,cD=0.64;
+  g.add(mk(cW,cH,cD,col,-1.4,cH/2,-3.1));
+  // Worktop
+  const topC=st==='Шейкер'?'#D0C8B8':'#D8D0C4';
+  g.add(mk(cW+0.02,0.04,cD+0.06,topC,-1.4,cH+0.02,-3.1,0.15,0.08));
+  // Cabinet doors
+  const rows=Math.round(cW/0.6);
+  for(let i=0;i<rows;i++){
+    const dx=-cW/2+0.3+i*cW/rows;
+    g.add(mk(cW/rows-0.04,cH-0.08,0.02,shadeColor(col,5),-1.4+dx,cH/2,-2.79));
+    g.add(mk(0.04,0.12,0.04,'#C0B090',-1.4+dx,cH*0.55,-2.76,0.3,0.7));
+  }
+  // Upper cabinets
+  g.add(mk(cW,0.7,0.38,col,-1.4,cH+0.72+0.35,-3.2));
+  const rows2=Math.round(cW/0.7);
+  for(let i=0;i<rows2;i++){
+    const dx=-cW/2+0.35+i*cW/rows2;
+    g.add(mk(cW/rows2-0.04,0.62,0.02,shadeColor(col,8),-1.4+dx,cH+0.72+0.31,-3.02));
+    g.add(mk(0.04,0.08,0.04,'#C0B090',-1.4+dx,cH+0.95,-2.99,0.3,0.7));
+  }
+  // Backsplash
+  g.add(mk(cW,0.7,0.03,shadeColor(col,15),-1.4,cH+0.35,-2.79));
+  // Sink
+  const sinkM=new THREE.MeshStandardMaterial({color:0xE0E0E0,roughness:0.2,metalness:0.6});
+  const sink=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.1,0.45),sinkM);
+  sink.position.set(-1.4,cH+0.01,-3.1); g.add(sink);
+  // Faucet
+  g.add(mk(0.04,0.25,0.04,'#C0B090',-1.4,cH+0.22,-2.87,0.3,0.8));
+  g.add(mk(0.18,0.04,0.04,'#C0B090',-1.3,cH+0.46,-2.87,0.3,0.8));
+}
+
+function buildIsland(g,st,col){
+  g.add(mk(1.5,0.92,0.82,col,1.5,0.46,0));
+  g.add(mk(1.56,0.05,0.88,shadeColor(col,8),1.5,0.94,0,0.15,0.08));
+  // Bar stools
+  if(st==='С баром'||st==='Открытый'){
+    [0.9,1.8].forEach(x=>{
+      const seat=mka(new THREE.CylinderGeometry(0.2,0.2,0.05,16),'#F8F4EE',0.9);
+      seat.position.set(x,0.75,0.75); g.add(seat);
+      const pole=mka(new THREE.CylinderGeometry(0.03,0.03,0.75,8),'#C0B090',0.3,0.7);
+      pole.position.set(x,0.375,0.75); g.add(pole);
+      const base=mka(new THREE.CylinderGeometry(0.18,0.18,0.04,16),'#C0B090',0.3,0.7);
+      base.position.set(x,0.02,0.75); g.add(base);
+    });
+  }
+}
+
+function buildDining(g,st,col){
+  let tableW=1.6, tableD=0.9;
+  if(st==='Круглый'){
+    const top=mka(new THREE.CylinderGeometry(0.8,0.8,0.06,32),col,0.6);
+    top.position.set(0,0.76,-0.5); g.add(top);
+    const base=mka(new THREE.CylinderGeometry(0.08,0.15,0.76,8),shadeColor(col,-10),0.7);
+    base.position.set(0,0.38,-0.5); g.add(base);
+    const foot=mka(new THREE.CylinderGeometry(0.35,0.35,0.04,8),shadeColor(col,-5),0.7);
+    foot.position.set(0,0.02,-0.5); g.add(foot);
+    // Chairs around
+    for(let i=0;i<4;i++){
+      const ang=(i/4)*Math.PI*2+Math.PI/4, r=1.15;
+      buildChairSimple(g,col,Math.cos(ang)*r, 0.5+Math.sin(ang)*r,ang+Math.PI);
+    }
+  } else if(st==='Барная стойка'){
+    g.add(mk(2.0,0.06,0.6,col,0,0.95,-0.5,0.6));
+    g.add(mk(2.0,0.95,0.04,shadeColor(col,-10),0,0.475,-0.8));
+    [[-0.6,0],[0,0],[0.6,0]].forEach(([x])=>{
+      const seat=mka(new THREE.CylinderGeometry(0.18,0.18,0.04,16),'#F8F4EE',0.9);
+      seat.position.set(x,0.75,-0.0); g.add(seat);
+      const pole=mka(new THREE.CylinderGeometry(0.025,0.025,0.75,8),'#C0B090',0.3,0.7);
+      pole.position.set(x,0.375,-0.0); g.add(pole);
+    });
+  } else {
+    g.add(mk(tableW,0.06,tableD,col,0,0.76,-0.5,0.6));
+    [[-tableW*0.36,0.3],[tableW*0.36,0.3],[-tableW*0.36,-0.3],[tableW*0.36,-0.3]].forEach(([lx,lz])=>{
+      g.add(mk(0.06,0.76,0.06,shadeColor(col,-15),lx,0.38,-0.5+lz,0.7));
+    });
+    [[-0.85,0.3],[-0.85,-0.3],[0.85,0.3],[0.85,-0.3]].forEach(([cx,cz])=>{
+      buildChairSimple(g,col,cx,-0.5+cz,cx<0?Math.PI/2:-Math.PI/2);
+    });
+  }
+}
+
+function buildChairSimple(g,col,x,z,rotY=0){
+  const seat=mk(0.44,0.05,0.42,'#F8F4EE',x,0.46,z,0.9);
+  seat.rotation.y=rotY; g.add(seat);
+  const back=mk(0.44,0.55,0.05,'#F8F4EE',x,0.74,z,0.9);
+  back.rotation.y=rotY; back.position.z=z+Math.sin(rotY)*0.18; back.position.x=x+Math.cos(rotY)*0.18; g.add(back);
+  [[-0.16,-0.16],[-0.16,0.16],[0.16,-0.16],[0.16,0.16]].forEach(([lx,lz])=>{
+    const leg=mk(0.04,0.46,0.04,shadeColor(col,-15),x+lx,0.23,z+lz,0.7);
+    leg.rotation.y=rotY; g.add(leg);
+  });
+}
+
+function buildSideboard(g,st,col){
+  g.add(mk(2.2,0.8,0.5,col,-1.4,0.4,-3.1));
+  g.add(mk(2.22,0.04,0.52,shadeColor(col,8),-1.4,0.82,-3.1,0.15,0.1));
+  [-0.55,0.55].forEach(x=>{
+    g.add(mk(1.04,0.68,0.48,shadeColor(col,-3),-1.4+x,0.4,-3.1));
+    g.add(mk(0.04,0.15,0.04,'#C0B090',-1.4+x,0.4,-2.86,0.3,0.7));
+  });
+}
+
+function buildDiningTable6(g,st,col){
+  const tw=2.0, td=1.0;
+  g.add(mk(tw,0.06,td,col,0,0.76,0,0.6));
+  [[-0.7,0],[-0.0,0],[0.7,0]].forEach(([lx,lz])=>{
+    g.add(mk(0.06,0.76,0.06,shadeColor(col,-15),lx,0.38,tw*0.4));
+    g.add(mk(0.06,0.76,0.06,shadeColor(col,-15),lx,0.38,-tw*0.4));
+  });
+  [[-0.7,0.7],[-0.0,0.7],[0.7,0.7],[-0.7,-0.7],[-0.0,-0.7],[0.7,-0.7]].forEach(([cx,cz])=>{
+    buildChairSimple(g,col,cx,cz+0,cz>0?Math.PI:0);
+  });
+}
+
+function buildChandelier(g,st,col){
+  const baseY=ROOM.h-0.15;
+  g.add(mk(0.08,0.2,0.08,col,0,baseY-0.1,0,0.3,0.7));
+  if(st==='Классика'){
+    const ring=mka(new THREE.TorusGeometry(0.5,0.03,8,32),col,0.3,0.7);
+    ring.position.set(0,baseY-0.4,0); ring.rotation.x=Math.PI/2; g.add(ring);
+    for(let i=0;i<6;i++){
+      const ang=(i/6)*Math.PI*2;
+      const pendant=mka(new THREE.CylinderGeometry(0.04,0.06,0.15,8),'#F8F0DC',0.9);
+      pendant.position.set(Math.cos(ang)*0.5,baseY-0.55,Math.sin(ang)*0.5); g.add(pendant);
+    }
+  } else if(st==='Кристалл'){
+    const ring=mka(new THREE.TorusGeometry(0.45,0.04,8,32),'#C0B090',0.2,0.7);
+    ring.position.set(0,baseY-0.4,0); ring.rotation.x=Math.PI/2; g.add(ring);
+    for(let i=0;i<8;i++){
+      const ang=(i/8)*Math.PI*2;
+      const crystal=mka(new THREE.OctahedronGeometry(0.08),'#D8F0FF',0.0,0.3);
+      crystal.material.transparent=true; crystal.material.opacity=0.7;
+      crystal.position.set(Math.cos(ang)*0.45,baseY-0.55,Math.sin(ang)*0.45); g.add(crystal);
+    }
+  } else { // Модерн
+    g.add(mk(0.8,0.04,0.04,col,0,baseY-0.35,0,0.3,0.7));
+    [-0.35,0,0.35].forEach(x=>{
+      const shade=mka(new THREE.CylinderGeometry(0.06,0.04,0.18,12),'#F8F0DC',0.9);
+      shade.position.set(x,baseY-0.5,0); g.add(shade);
+    });
+  }
+  const ptL=new THREE.PointLight(0xFFE090,1.0,8); ptL.position.set(0,baseY-0.4,0); g.add(ptL);
+}
+
+function buildPendant(g,st,col){
+  [-0.8,0,0.8].forEach(x=>{
+    g.add(mk(0.02,0.8,0.02,col,x+0.2,ROOM.h-0.1,-1.5,0.3,0.7));
+    if(st==='Шар'){
+      const shade=mka(new THREE.SphereGeometry(0.15,12,12),'#F8F0DC',0.9);
+      shade.position.set(x+0.2,ROOM.h-0.9,-1.5); g.add(shade);
+    } else if(st==='Конус'){
+      const shade=mka(new THREE.CylinderGeometry(0.0,0.15,0.25,12),'#2A2A2A',0.4,0.5);
+      shade.position.set(x+0.2,ROOM.h-0.95,-1.5); g.add(shade);
+    } else {
+      const shade=mka(new THREE.CylinderGeometry(0.12,0.18,0.22,16),'#8B6840',0.6);
+      shade.position.set(x+0.2,ROOM.h-0.91,-1.5); g.add(shade);
+    }
+    const ptL=new THREE.PointLight(0xFFE090,0.5,3); ptL.position.set(x+0.2,ROOM.h-0.9,-1.5); g.add(ptL);
+  });
+}
+
+function buildDesk(g,st,col){
+  if(st==='Угловой'){
+    g.add(mk(1.8,0.04,0.7,col,-1.2,0.76,-2.6,0.6));
+    g.add(mk(0.7,0.04,1.2,col,-2.25,0.76,-2.05,0.6));
+    [[-2.1,-3.1],[-0.55,-3.1],[-2.1,-1.65]].forEach(([lx,lz])=>{
+      g.add(mk(0.06,0.76,0.06,shadeColor(col,-15),lx,0.38,lz,0.7));
+    });
+  } else if(st==='С тумбой'){
+    g.add(mk(1.8,0.04,0.7,col,-1.2,0.76,-2.6,0.6));
+    g.add(mk(0.5,0.76,0.6,col,-1.95,0.38,-2.6));
+    [0.22,0.5].forEach(y=>g.add(mk(0.44,0.26,0.52,shadeColor(col,-5),-1.95,y,-2.6)));
+    g.add(mk(0.06,0.76,0.06,shadeColor(col,-15),-0.35,0.38,-2.95,0.7));
+    g.add(mk(0.06,0.76,0.06,shadeColor(col,-15),-0.35,0.38,-2.25,0.7));
+  } else {
+    g.add(mk(1.8,0.04,0.7,col,-1.2,0.76,-2.6,0.6));
+    [[-1.95,-2.95],[-0.45,-2.95],[-1.95,-2.25],[-0.45,-2.25]].forEach(([lx,lz])=>{
+      g.add(mk(0.06,0.76,0.06,shadeColor(col,-15),lx,0.38,lz,0.7));
+    });
+  }
+  // Monitor
+  const screen=mk(0.04,0.55,0.7,'#101015',-0.85,1.1,-2.35,0.2,0.4);
+  g.add(screen);
+  g.add(mk(0.12,0.3,0.12,'#808080',-0.85,0.92,-2.38,0.4,0.5));
+}
+
+function buildOfficeChair(g,st,col){
+  if(st==='Барный стул'){
+    const seat=mka(new THREE.CylinderGeometry(0.22,0.22,0.06,16),'#808080',0.8);
+    seat.position.set(-1.2,0.72,-1.8); g.add(seat);
+    const pole=mka(new THREE.CylinderGeometry(0.03,0.03,0.72,8),'#C0B090',0.3,0.7);
+    pole.position.set(-1.2,0.36,-1.8); g.add(pole);
+  } else {
+    g.add(mk(0.52,0.06,0.5,col,-1.2,0.52,-1.9,0.9));
+    g.add(mk(0.52,0.56,0.06,col,-1.2,0.82,-1.65,0.9));
+    [-0.18,0.18].forEach(x=>{
+      g.add(mk(0.04,0.06,0.04,'#808080',-1.2+x,0.49,-1.68,0.5,0.5));
+      g.add(mk(0.04,0.06,0.04,'#808080',-1.2+x,0.49,-2.12,0.5,0.5));
+    });
+    const base=mka(new THREE.CylinderGeometry(0.03,0.03,0.49,8),'#C0B090',0.3,0.7);
+    base.position.set(-1.2,0.245,-1.9); g.add(base);
+    const star=mka(new THREE.CylinderGeometry(0.28,0.28,0.04,5),'#C0B090',0.3,0.7);
+    star.position.set(-1.2,0.02,-1.9); g.add(star);
+  }
+}
+
+function buildShelf(g,st,col){
+  if(st==='Закрытый'){
+    g.add(mk(1.8,2.2,0.38,col,2.5,1.1,-2.9));
+    [0.4,0.9,1.38,1.86].forEach(y=>g.add(mk(1.72,0.04,0.32,shadeColor(col,5),2.5,y,-2.9)));
+    [0,0.88].forEach(x=>{
+      g.add(mk(0.04,2.12,0.32,shadeColor(col,-5),2.5-0.88+x,1.1,-2.9));
+    });
+  } else if(st==='Навесной'){
+    [0.55,1.1,1.65].forEach(y=>{
+      g.add(mk(1.8,0.05,0.26,col,2.5,y,-3.12));
+      g.add(mk(0.04,y,0.06,'#C0B090',1.62,y/2,-3.06,0.3,0.7));
+      g.add(mk(0.04,y,0.06,'#C0B090',3.38,y/2,-3.06,0.3,0.7));
+    });
+  } else {
+    g.add(mk(0.04,2.2,0.32,col,1.62,1.1,-2.9));
+    g.add(mk(0.04,2.2,0.32,col,3.38,1.1,-2.9));
+    [0.35,0.85,1.35,1.85].forEach(y=>g.add(mk(1.8,0.05,0.32,col,2.5,y,-2.9)));
+  }
+  // Books
+  const bCols=['#8B4040','#4040A0','#408040','#A07030','#703070','#307080'];
+  for(let i=0;i<8;i++){
+    const bw=0.08+Math.random()*0.04, bh=0.25+Math.random()*0.12;
+    g.add(mk(bw,bh,0.2,bCols[i%bCols.length],2.5-0.7+i*0.18,0.55+bh/2,-2.88,0.9));
+  }
+}
+
+function shadeColor(hex,amount){
+  const num=parseInt(hex.replace('#',''),16);
+  const r=Math.min(255,Math.max(0,((num>>16)&0xFF)+amount));
+  const g=Math.min(255,Math.max(0,((num>>8)&0xFF)+amount));
+  const b=Math.min(255,Math.max(0,(num&0xFF)+amount));
+  return '#'+((r<<16)|(g<<8)|b).toString(16).padStart(6,'0');
+}
+
+function buildFurniture(){
+  furnGroup.clear();
+  const defs=FURN_DEFS[activeRoom];
+  defs.forEach(def=>{
+    if(!furnState[def.key]?.visible) return;
+    const es=furnEditState[activeRoom]?.[def.key]||{color:def.colors[0],style:def.styles[0]};
+    const g=new THREE.Group();
+    switch(def.key){
+      case 'sofa':      buildSofa(g,es.style,es.color); break;
+      case 'armchair':  buildArmchair(g,es.style,es.color); break;
+      case 'table':     buildTable(g,es.style,es.color); break;
+      case 'tv':        buildTV(g,es.style,es.color); break;
+      case 'rug':       buildRug(g,es.style,es.color); break;
+      case 'plant':     buildPlant(g,es.style); break;
+      case 'lamp':      buildLamp(g,es.style,es.color); break;
+      case 'shelves':   buildShelves(g,es.style,es.color); break;
+      case 'bed':       buildBed(g,es.style,es.color); break;
+      case 'wardrobe':  buildWardrobe(g,es.style,es.color); break;
+      case 'dresser':   buildDresser(g,es.style,es.color); break;
+      case 'mirror':    buildMirror(g,es.style,es.color); break;
+      case 'counter':   buildCounter(g,es.style,es.color); break;
+      case 'island':    buildIsland(g,es.style,es.color); break;
+      case 'dining':    buildDining(g,es.style,es.color); break;
+      case 'pendant':   buildPendant(g,es.style,es.color); break;
+      case 'desk':      buildDesk(g,es.style,es.color); break;
+      case 'chair':     buildOfficeChair(g,es.style,es.color); break;
+      case 'shelf':     buildShelf(g,es.style,es.color); break;
+      case 'dining-table': buildDining(g,es.style,es.color); break;
+      case 'chairs6':   buildDiningTable6(g,es.style,es.color); break;
+      case 'sideboard': buildSideboard(g,es.style,es.color); break;
+      case 'chandelier': buildChandelier(g,es.style,es.color); break;
+    }
+    g.userData={key:def.key,label:def.label};
+    furnGroup.add(g);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  RAYCASTING FOR CLICK SELECTION
+// ═══════════════════════════════════════════════════════
+const raycaster=new THREE.Raycaster();
+const mouse=new THREE.Vector2();
+canvas.addEventListener('click',e=>{
+  const rect=canvas.getBoundingClientRect();
+  mouse.x=((e.clientX-rect.left)/rect.width)*2-1;
+  mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse,camera);
+  const objs=[];
+  furnGroup.children.forEach(g=>{ const hits=raycaster.intersectObjects(g.children,true); if(hits.length>0) objs.push({dist:hits[0].distance,group:g}); });
+  if(objs.length>0){
+    objs.sort((a,b)=>a.dist-b.dist);
+    const grp=objs[0].group;
+    selectedFurnKey=grp.userData.key;
+    document.getElementById('sel-name').textContent=grp.userData.label;
+    document.getElementById('sel-overlay').classList.add('show');
+    // Switch to furn tab and open editor
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+    document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
+    document.querySelector('[onclick="switchTab(\'furn\',this)"]').classList.add('on');
+    document.getElementById('pane-furn').classList.add('on');
+    renderFurnList(selectedFurnKey);
+    setTimeout(()=>document.getElementById('sel-overlay').classList.remove('show'),2000);
+  }
+});
+
+// ═══════════════════════════════════════════════════════
+//  UI BUILDERS
+// ═══════════════════════════════════════════════════════
+function buildColorPicker(containerId, colors, activeHex, onSelect){
+  const c=document.getElementById(containerId);
+  c.innerHTML='';
+  colors.forEach(({hex,name})=>{
+    const d=document.createElement('div');
+    d.title=name;
+    d.style.cssText=`background:${hex};${hex==='#FFFFFF'?'border:1px solid #ddd;':''}`;
+    d.className='cpx'+(hex===activeHex?' on':'');
+    d.onclick=()=>{ c.querySelectorAll('.cpx').forEach(x=>x.classList.remove('on')); d.classList.add('on'); onSelect(hex,d); };
+    c.appendChild(d);
+    const lbl=document.createElement('div'); lbl.className='cpx-name'; lbl.textContent=name;
+    c.appendChild(lbl);
+  });
+}
+
+function buildFloorMats(){
+  const c=document.getElementById('floor-mats'); c.innerHTML='';
+  const activeId=window._activeFloor||'oak';
+  FLOOR_MATS.forEach(mat=>{
+    const d=document.createElement('div');
+    d.className='mat'+(mat.id===activeId?' on':'');
+    d.innerHTML=`<div class="mat-prev" style="background:${mat.colors[0]};${getMatPreviewStyle(mat)}"></div><div class="mat-nm">${mat.name}</div><div class="mat-sub">${mat.sub}</div>`;
+    d.onclick=()=>{
+      document.querySelectorAll('#floor-mats .mat').forEach(x=>x.classList.remove('on'));
+      d.classList.add('on'); window._activeFloor=mat.id;
+      applyFloorMat(mat.id, mat.colors[0]);
+    };
+    c.appendChild(d);
+  });
+}
+
+function getMatPreviewStyle(mat){
+  if(mat.type==='wood'||mat.type==='dark-wood') return `background:repeating-linear-gradient(90deg,${mat.colors[0]} 0,${mat.colors[0]} 10px,${mat.colors[1]||mat.colors[0]} 10px,${mat.colors[1]||mat.colors[0]} 11px,${mat.colors[2]||mat.colors[0]} 11px,${mat.colors[2]||mat.colors[0]} 20px);`;
+  if(mat.type==='herringbone') return `background:repeating-linear-gradient(45deg,${mat.colors[0]} 0,${mat.colors[0]} 10px,${mat.colors[1]||mat.colors[0]} 10px,${mat.colors[1]||mat.colors[0]} 20px);`;
+  if(mat.type.includes('marble')) return `background:linear-gradient(135deg,${mat.colors[0]} 30%,${mat.colors[1]||mat.colors[0]} 70%);`;
+  if(mat.type.includes('tiles')) return `background:repeating-conic-gradient(${mat.colors[0]} 0% 25%,${mat.colors[1]||mat.colors[0]} 0% 50%) 0 0/16px 16px;`;
+  if(mat.type==='hex') return `background:${mat.colors[0]};`;
+  return `background:${mat.colors[0]};`;
+}
+
+function applyFloorMat(id,colorHex){
+  floorMat.map = getFloorTex(id, colorHex);
+  floorMat.color.set(new THREE.Color(colorHex));
+  floorMat.roughness = FLOOR_MATS.find(m=>m.id===id)?.type?.includes('marble')? 0.15 :
+    FLOOR_MATS.find(m=>m.id===id)?.type==='epoxy'? 0.05 :
+    FLOOR_MATS.find(m=>m.id===id)?.type==='carpet'? 1.0 : 0.6;
+  floorMat.metalness = FLOOR_MATS.find(m=>m.id===id)?.type==='epoxy'? 0.1 : 0;
+  floorMat.needsUpdate=true;
+}
+
+function renderFurnList(openKey=null){
+  const list=document.getElementById('flist'); list.innerHTML='';
+  FURN_DEFS[activeRoom].forEach(def=>{
+    const on=furnState[def.key]?.visible;
+    const es=furnEditState[activeRoom]?.[def.key]||{color:def.colors[0],style:def.styles[0]};
+    const isOpen=openKey===def.key||selectedFurnKey===def.key;
+    const row=document.createElement('div');
+    row.innerHTML=`
+      <div class="frow${isOpen?' selected':''}" id="frow-${def.key}" onclick="toggleFurnEditor('${def.key}')">
+        <div class="frow-icon" style="background:${es.color}22">${def.icon}</div>
+        <div class="frow-info">
+          <div class="frow-nm">${def.label}</div>
+          <div class="frow-sub">${es.style} · <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${es.color};vertical-align:middle"></span></div>
+        </div>
+        <div class="frow-actions">
+          <div class="edit-btn" onclick="event.stopPropagation();toggleFurnEditor('${def.key}')">✏️</div>
+          <div class="tog ${on?'on':''}" id="tog-${def.key}" onclick="event.stopPropagation();toggleFurnVis('${def.key}')"></div>
+        </div>
+      </div>
+      <div class="furn-editor${isOpen?' show':''}" id="editor-${def.key}">
+        <div class="fe-ttl">✦ Редактирование: ${def.label}</div>
+        <div class="fe-row">
+          <div class="fe-lbl">Цвет / материал</div>
+          <div class="fe-colors" id="fec-${def.key}"></div>
+        </div>
+        <div class="fe-row">
+          <div class="fe-lbl">Стиль</div>
+          <div class="fe-styles" id="fes-${def.key}"></div>
+        </div>
+      </div>`;
+    list.appendChild(row);
+    // Fill colors
+    const cc=document.getElementById('fec-'+def.key);
+    def.colors.forEach(c=>{
+      const sw=document.createElement('div');
+      sw.className='fe-sw'+(c===es.color?' on':'');
+      sw.style.background=c;
+      if(c==='#FFFFFF') sw.style.border='2px solid #ddd';
+      sw.onclick=()=>{
+        cc.querySelectorAll('.fe-sw').forEach(x=>x.classList.remove('on')); sw.classList.add('on');
+        if(!furnEditState[activeRoom]) furnEditState[activeRoom]={};
+        if(!furnEditState[activeRoom][def.key]) furnEditState[activeRoom][def.key]={color:def.colors[0],style:def.styles[0]};
+        furnEditState[activeRoom][def.key].color=c;
+        buildFurniture(); renderFurnList(def.key);
+      };
+      cc.appendChild(sw);
+    });
+    // Fill styles
+    const sc=document.getElementById('fes-'+def.key);
+    def.styles.forEach(s=>{
+      const btn=document.createElement('button');
+      btn.className='fe-style'+(s===es.style?' on':'');
+      btn.textContent=s;
+      btn.onclick=()=>{
+        sc.querySelectorAll('.fe-style').forEach(x=>x.classList.remove('on')); btn.classList.add('on');
+        if(!furnEditState[activeRoom]) furnEditState[activeRoom]={};
+        if(!furnEditState[activeRoom][def.key]) furnEditState[activeRoom][def.key]={color:def.colors[0],style:def.styles[0]};
+        furnEditState[activeRoom][def.key].style=s;
+        buildFurniture(); renderFurnList(def.key);
+      };
+      sc.appendChild(btn);
+    });
+  });
+}
+
+function toggleFurnEditor(key){
+  selectedFurnKey=selectedFurnKey===key?null:key;
+  renderFurnList(selectedFurnKey);
+}
+function toggleFurnVis(key){
+  furnState[key].visible=!furnState[key].visible;
+  buildFurniture(); renderFurnList(selectedFurnKey);
+}
+
+// ═══════════════════════════════════════════════════════
+//  PRESETS
+// ═══════════════════════════════════════════════════════
+const PRESETS=[
+  {id:'minimalist', name:'Минимализм',  sub:'Белый/серый/дерево', icon:'⬜',
+   wall:'#F7F3EC', ceil:'#FFFFFF', floor:'oak', mold:'#F8F4EE', light:'studio'},
+  {id:'luxury',    name:'Люкс',        sub:'Тёмный/золото/мрамор', icon:'🖤',
+   wall:'#2A2A2A', ceil:'#1A1A1A', floor:'marble-w', mold:'#C0B090', light:'warm'},
+  {id:'scandinavian', name:'Скандинавия', sub:'Белый/дерево/акценты',icon:'🪵',
+   wall:'#FFFFFF', ceil:'#FFFFFF', floor:'ash', mold:'#FFFFFF', light:'day'},
+  {id:'loft',      name:'Лофт',        sub:'Серый/металл/кирпич', icon:'🏭',
+   wall:'#B0B0B0', ceil:'#888888', floor:'concrete', mold:'#888888', light:'studio'},
+  {id:'provance',  name:'Прованс',     sub:'Бежевый/пастель/цветы', icon:'🌸',
+   wall:'#EDE5D8', ceil:'#F8F4EE', floor:'light-wood', mold:'#F0ECE0', light:'day'},
+  {id:'japandi',   name:'Japandi',     sub:'Серый/натуральный/минимал', icon:'🍵',
+   wall:'#D5CFC6', ceil:'#EBEBEB', floor:'wenge', mold:'#D5CFC6', light:'warm'},
+  {id:'classic',   name:'Классика',    sub:'Кремовый/орех/золото', icon:'🏛️',
+   wall:'#EDE5D8', ceil:'#F5F0E8', floor:'parquet', mold:'#C0B090', light:'warm'},
+  {id:'dark-modern',name:'Тёмный модерн',sub:'Антрацит/металл/стекло',icon:'🌑',
+   wall:'#3A4A3C', ceil:'#1A1A1A', floor:'dark-marble', mold:'#2A2A2A', light:'evening'},
+];
+
+function buildPresets(){
+  const c=document.getElementById('presets'); c.innerHTML='';
+  PRESETS.forEach(p=>{
+    const d=document.createElement('div');
+    d.className='preset';
+    d.innerHTML=`<div class="preset-preview" style="background:linear-gradient(135deg,${p.wall},${p.ceil})">${p.icon}</div><div class="preset-nm">${p.name}</div><div class="preset-sub">${p.sub}</div>`;
+    d.onclick=()=>{
+      document.querySelectorAll('.preset').forEach(x=>x.classList.remove('on')); d.classList.add('on');
+      applyPreset(p);
+    };
+    c.appendChild(d);
+  });
+}
+
+function applyPreset(p){
+  wallMat.color.set(p.wall);
+  ceilMat.color.set(p.ceil);
+  const fm=FLOOR_MATS.find(m=>m.id===p.floor)||FLOOR_MATS[0];
+  applyFloorMat(fm.id, fm.colors[0]);
+  moldMat.color.set(p.mold);
+  window._activeFloor=fm.id;
+  setLight(p.light, document.querySelector('.light-opt'));
+  buildFloorMats();
+  // Update wall color pickers
+  buildColorPicker('wall-colors', WALL_COLORS, p.wall, setWallColor);
+  buildColorPicker('ceil-colors', CEIL_COLORS, p.ceil, setCeilColor);
+  buildColorPicker('mold-colors', MOLD_COLORS, p.mold, setMoldColor);
+}
+
+// ═══════════════════════════════════════════════════════
+//  LIGHTING
+// ═══════════════════════════════════════════════════════
+function setLight(mode, _el){
+  document.querySelectorAll('.light-opt').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.light-opt').forEach(x=>{ if(x.textContent.toLowerCase().includes(mode==='day'?'дневной':mode==='evening'?'вечер':mode==='warm'?'тёплый':'студ')) x.classList.add('on'); });
+  if(mode==='day'){
+    scene.background.set('#c8c0b8'); ambLight.intensity=0.55; ambLight.color.set(0xfff4e8);
+    sunLight.intensity=2.0; sunLight.color.set(0xfff4d0); scene.fog.color.set('#c0b8b0');
+    renderer.toneMappingExposure=1.1;
+  } else if(mode==='evening'){
+    scene.background.set('#5a4838'); ambLight.intensity=0.3; ambLight.color.set(0xff8840);
+    sunLight.intensity=0.8; sunLight.color.set(0xff7020); scene.fog.color.set('#503828');
+    renderer.toneMappingExposure=0.9;
+  } else if(mode==='warm'){
+    scene.background.set('#8a7060'); ambLight.intensity=0.35; ambLight.color.set(0xffc060);
+    sunLight.intensity=0.5; sunLight.color.set(0xffb030); scene.fog.color.set('#806050');
+    warmLight.intensity=1.4; renderer.toneMappingExposure=0.95;
+  } else if(mode==='studio'){
+    scene.background.set('#d8d8d8'); ambLight.intensity=0.8; ambLight.color.set(0xf8f8ff);
+    sunLight.intensity=1.2; sunLight.color.set(0xffffff); scene.fog.color.set('#c8c8c8');
+    renderer.toneMappingExposure=1.0;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  CONTROLS
+// ═══════════════════════════════════════════════════════
+function setWallColor(hex){ wallMat.color.set(hex); }
+function setCeilColor(hex){ ceilMat.color.set(hex); }
+function setMoldColor(hex){ moldMat.color.set(hex); }
+
+function setRoom(room, el){
+  activeRoom=room;
+  document.querySelectorAll('.rm-tab').forEach(t=>t.classList.remove('on')); el.classList.add('on');
+  initFurnState(room); renderFurnList(); buildFurniture();
+}
+function switchTab(id, el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on'); document.getElementById('pane-'+id).classList.add('on');
+}
+const CEIL_HEIGHTS=[2.5,3.0,3.5];
+function setCeilHeight(val, el){
+  const h=CEIL_HEIGHTS[val];
+  document.getElementById('ceil-h-val').textContent=h+'м';
+  ROOM.h=h; buildRoom(); buildFurniture();
+}
+
+// ═══════════════════════════════════════════════════════
+//  ORBIT CONTROLS
+// ═══════════════════════════════════════════════════════
+let isDrag=false, prev={x:0,y:0};
+let sph={th:0.7, ph:1.05, r:9};
+function updateCam(){
+  camera.position.x=sph.r*Math.sin(sph.ph)*Math.sin(sph.th);
+  camera.position.y=sph.r*Math.cos(sph.ph)+1.5;
+  camera.position.z=sph.r*Math.sin(sph.ph)*Math.cos(sph.th);
+  camera.lookAt(0,1.5,0);
+}
+updateCam();
+let moved=false;
+canvas.addEventListener('mousedown',e=>{ isDrag=true; prev={x:e.clientX,y:e.clientY}; moved=false; });
+window.addEventListener('mouseup',()=>{ isDrag=false; });
+window.addEventListener('mousemove',e=>{
+  if(!isDrag)return;
+  const dx=(e.clientX-prev.x)*0.007, dy=(e.clientY-prev.y)*0.007;
+  if(Math.abs(dx)>0.003||Math.abs(dy)>0.003) moved=true;
+  sph.th-=dx; sph.ph=Math.max(0.3,Math.min(1.4,sph.ph+dy));
+  prev={x:e.clientX,y:e.clientY}; updateCam();
+});
+canvas.addEventListener('click',e=>{ if(moved){ moved=false; } });
+canvas.addEventListener('wheel',e=>{ sph.r=Math.max(4,Math.min(18,sph.r+e.deltaY*0.012)); updateCam(); e.preventDefault(); },{passive:false});
+let lt=null,ltd=null;
+canvas.addEventListener('touchstart',e=>{ if(e.touches.length===1){isDrag=true;prev={x:e.touches[0].clientX,y:e.touches[0].clientY};moved=false;} if(e.touches.length===2) ltd=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); },{passive:false});
+canvas.addEventListener('touchend',()=>{isDrag=false;ltd=null;});
+canvas.addEventListener('touchmove',e=>{
+  if(e.touches.length===1&&isDrag){const dx=(e.touches[0].clientX-prev.x)*0.009,dy=(e.touches[0].clientY-prev.y)*0.009;sph.th-=dx;sph.ph=Math.max(0.3,Math.min(1.4,sph.ph+dy));prev={x:e.touches[0].clientX,y:e.touches[0].clientY};updateCam();moved=true;}
+  if(e.touches.length===2&&ltd!==null){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);sph.r=Math.max(4,Math.min(18,sph.r-(d-ltd)*0.025));ltd=d;updateCam();}
+  e.preventDefault();
+},{passive:false});
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+buildColorPicker('wall-colors', WALL_COLORS, '#F7F3EC', setWallColor);
+buildColorPicker('ceil-colors', CEIL_COLORS, '#FFFFFF', setCeilColor);
+buildColorPicker('mold-colors', MOLD_COLORS, '#F8F4EE', setMoldColor);
+buildFloorMats();
+buildPresets();
+buildRoom();
+initFurnState('living');
+renderFurnList();
+buildFurniture();
+window._activeFloor='oak';
+setTimeout(()=>document.getElementById('hint').classList.add('gone'),5000);
+
+// RENDER LOOP
+let t=0;
+function animate(){
+  requestAnimationFrame(animate);
+  t+=0.003;
+  warmLight.intensity=(0.7+Math.sin(t)*0.05);
+  renderer.render(scene,camera);
+}
+animate();
+</script>
+</body>
+</html>
