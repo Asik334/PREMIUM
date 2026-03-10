@@ -14,7 +14,7 @@
   --text:#1a1a1a;--muted:#8a8480;--radius:12px;
   --sh:0 4px 24px rgba(0,0,0,0.08);
 }
-body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh;display:flex;flex-direction:column}
+body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100dvh;display:flex;flex-direction:column}
 
 /* HEADER */
 .hdr{background:#fff;border-bottom:1px solid var(--border);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:200;box-shadow:0 1px 12px rgba(0,0,0,0.05)}
@@ -156,6 +156,136 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--text);
   .mat-grid{grid-template-columns:1fr 1fr 1fr}
   .color-picker-large{grid-template-columns:repeat(5,1fr)}
 }
+
+/* =========================
+   MOBILE ADAPTATION
+========================= */
+
+@media (max-width: 760px){
+
+body{
+height:100dvh;
+overflow:hidden;
+}
+
+/* Layout */
+
+.main{
+flex-direction:column;
+height:100%;
+}
+
+/* 3D сцена */
+
+.cv-wrap{
+flex:none;
+height:58vh;
+min-height:260px;
+}
+
+/* панель */
+
+.panel{
+width:100%;
+height:42vh;
+border-left:none;
+border-top:1px solid var(--border);
+overflow-y:auto;
+-webkit-overflow-scrolling:touch;
+}
+
+/* Tabs */
+
+.tab{
+font-size:9px;
+padding:12px 4px;
+letter-spacing:1px;
+}
+
+/* секции */
+
+.sec{
+padding:14px;
+}
+
+/* мебель */
+
+.frow{
+padding:7px 10px;
+}
+
+.frow-nm{
+font-size:10px;
+}
+
+.frow-sub{
+font-size:8px;
+}
+
+/* color palette */
+
+.color-picker-large{
+grid-template-columns:repeat(5,1fr);
+gap:5px;
+}
+
+.cpx{
+border-radius:6px;
+}
+
+/* материалы */
+
+.mat-grid{
+grid-template-columns:1fr 1fr;
+gap:6px;
+}
+
+/* lighting */
+
+.light-grid{
+grid-template-columns:1fr 1fr;
+}
+
+/* presets */
+
+.preset-grid{
+grid-template-columns:1fr 1fr;
+}
+
+/* кнопки */
+
+.rm-tab{
+padding:8px 12px;
+font-size:9px;
+}
+
+.fe-style{
+padding:6px 12px;
+font-size:9px;
+}
+
+/* swatches */
+
+.sw{
+width:28px;
+height:28px;
+}
+
+/* canvas */
+
+#cv{
+touch-action:none;
+}
+
+/* подсказка */
+
+.cv-hint{
+font-size:9px;
+padding:6px 14px;
+}
+
+}
+
 </style>
 </head>
 <body>
