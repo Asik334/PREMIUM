@@ -61,6 +61,8 @@ BN <span class="green-accent">PREMIUM</span>
 
 <a href="#process" class="hover:text-green-700">Этапы</a>
 
+<a href="#referral" class="hover:text-green-700">Реферал 🎁</a>
+
 </nav>
 
 <a href="https://wa.me/77761267613"
@@ -92,7 +94,6 @@ WhatsApp
 Создаем интерьеры премиум-класса с гарантией 1 год
 
 </p>
-
 <div class="flex flex-col md:flex-row gap-5 justify-center items-center mt-6">
 
 <a href="https://wa.me/77761267613"
@@ -108,6 +109,10 @@ target="_blank"
 class="bg-white hover:bg-gray-100 text-black px-10 py-4 rounded-lg text-lg font-semibold shadow-md transition border">
 
 Смотреть работы
+
+</a>
+
+
 
 </a>
 
@@ -137,8 +142,8 @@ class="bg-white hover:bg-gray-100 text-black px-10 py-4 rounded-lg text-lg font-
 </p>
 </div>
 
-<div class="flex justify-center">
-<video controls class="rounded-lg shadow-lg max-h-[500px] w-auto">
+<div class="aspect-video rounded-lg overflow-hidden shadow-lg">
+<video controls class="w-full h-full object-cover">
 <source src="https://res.cloudinary.com/ds9sc3zxh/video/upload/v1772996610/img-4766_SSbSlLGv_u0s4t7.mp4" type="video/mp4">
 </video>
 </div>
@@ -331,8 +336,7 @@ class="bg-green-premium text-white w-full py-3 rounded font-bold">
 
 </div>
 
-</section>\
-
+</section>
 
 
 <!-- CTA -->
@@ -354,7 +358,7 @@ class="bg-white text-black px-12 py-5 rounded-md text-lg font-bold">
 
 </section>
 
-  <!-- LEAD FORM -->
+<!-- LEAD FORM -->
 <section id="lead-form" class="py-20 bg-white">
   <div class="max-w-2xl mx-auto px-6">
 
@@ -414,7 +418,7 @@ class="bg-white text-black px-12 py-5 rounded-md text-lg font-bold">
       <!-- Кнопка -->
       <button onclick="submitLeadForm()"
         class="mt-8 w-full bg-green-premium text-white py-4 rounded-xl text-sm font-bold tracking-widest uppercase hover:bg-green-800 transition-colors">
-        Отправить заявку в WhatsApp
+        Отправить заявку
       </button>
 
       <p class="text-xs text-gray-400 text-center mt-4">
@@ -435,6 +439,89 @@ class="bg-white text-black px-12 py-5 rounded-md text-lg font-bold">
     </div>
 
   </div>
+
+<!-- REFERRAL SECTION -->
+<section id="referral" class="py-20 bg-white">
+  <div class="max-w-2xl mx-auto px-6">
+
+    <div class="text-center mb-10">
+      <span class="text-xs font-semibold tracking-[0.22em] uppercase text-green-700">Реферальная программа</span>
+      <h2 class="text-3xl font-bold mt-3 mb-3">Приведи друга — получи бонус</h2>
+      <p class="text-gray-500 text-sm">Поделитесь ссылкой с другом. Когда он закажет ремонт — вы получите скидку 5% на следующий проект</p>
+    </div>
+
+    <!-- Шаг 1: Ввод имени/телефона для получения ссылки -->
+    <div id="ref-get-block" class="bg-gray-50 border border-gray-200 rounded-2xl p-8 md:p-10">
+
+      <p class="text-sm text-gray-500 mb-6 text-center">Введите ваш номер телефона — мы создадим вашу персональную ссылку</p>
+
+      <div class="flex flex-col gap-1 mb-6">
+        <label class="text-xs font-semibold tracking-widest uppercase text-gray-400">Ваш телефон</label>
+        <input id="ref-phone" type="tel" placeholder="+7 (___) ___-__-__"
+          class="border-b border-gray-300 bg-transparent py-3 text-base outline-none focus:border-green-700 transition-colors placeholder-gray-300">
+      </div>
+
+      <button onclick="generateRefLink()"
+        class="w-full bg-green-premium text-white py-4 rounded-xl text-sm font-bold tracking-widest uppercase hover:bg-green-800 transition-colors">
+        Получить мою ссылку
+      </button>
+    </div>
+
+    <!-- Результат: реферальная ссылка -->
+    <div id="ref-result-block" class="hidden bg-gray-50 border border-gray-200 rounded-2xl p-8 md:p-10 text-center">
+
+      <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-green-100 mb-6">
+        <svg class="w-7 h-7 text-green-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"/>
+          <path d="M10.172 13.828a4 4 0 015.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+        </svg>
+      </div>
+
+      <h3 class="text-xl font-bold mb-2">Ваша реферальная ссылка готова!</h3>
+      <p class="text-gray-500 text-sm mb-6">Скопируйте и отправьте другу. За каждого клиента — скидка 5% вам.</p>
+
+      <!-- Ссылка -->
+      <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-3 mb-4">
+        <span id="ref-link-text" class="flex-1 text-sm text-gray-700 text-left truncate"></span>
+        <button onclick="copyRefLink()" id="ref-copy-btn"
+          class="shrink-0 bg-green-premium text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-green-800 transition">
+          Копировать
+        </button>
+      </div>
+
+      <!-- Поделиться в WhatsApp -->
+      <a id="ref-whatsapp-btn" href="#" target="_blank"
+        class="inline-flex items-center gap-2 bg-[#25D366] text-white px-6 py-3 rounded-xl text-sm font-semibold hover:bg-[#1ebe5d] transition mt-2">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+          <path d="M12 0C5.374 0 0 5.373 0 12c0 2.117.549 4.107 1.508 5.845L.057 24l6.305-1.654A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.007-1.367l-.36-.214-3.733.979.997-3.645-.234-.374A9.818 9.818 0 012.182 12C2.182 6.58 6.58 2.182 12 2.182S21.818 6.58 21.818 12 17.42 21.818 12 21.818z"/>
+        </svg>
+        Поделиться в WhatsApp
+      </a>
+
+    </div>
+
+    <!-- Как работает -->
+    <div class="mt-10 grid grid-cols-3 gap-6 text-center">
+      <div>
+        <div class="text-3xl mb-2">🔗</div>
+        <p class="text-sm font-semibold">1. Получите ссылку</p>
+        <p class="text-xs text-gray-400 mt-1">Введите номер телефона</p>
+      </div>
+      <div>
+        <div class="text-3xl mb-2">📲</div>
+        <p class="text-sm font-semibold">2. Поделитесь</p>
+        <p class="text-xs text-gray-400 mt-1">Отправьте другу</p>
+      </div>
+      <div>
+        <div class="text-3xl mb-2">🎁</div>
+        <p class="text-sm font-semibold">3. Получите бонус</p>
+        <p class="text-xs text-gray-400 mt-1">Скидка 5% на ваш ремонт</p>
+      </div>
+    </div>
+
+  </div>
+</section>
 
 <!-- FOOTER -->
 
@@ -461,22 +548,6 @@ Instagram: @remont_bn_premium
 </footer>
 
 <script>
-
-function calcPrice(){
-
-let area=document.getElementById("area").value
-let type=document.getElementById("type").value
-
-let total=area*type
-
-document.getElementById("result").innerHTML=
-"Примерная стоимость: "+total.toLocaleString()+" ₸"
-
-}
-
-</script>
-
- <script>
 
 function calcPrice(){
 
@@ -520,56 +591,129 @@ function submitLeadForm(){
   const area    = document.getElementById('lf-area').value.trim();
   const comment = document.getElementById('lf-comment').value.trim();
 
-  if(!name)  { lfHighlight('lf-name',  'Введите имя');    return; }
-  if(phone.replace(/\D/g,'').length < 11){ lfHighlight('lf-phone','Введите телефон'); return; }
-  if(!type)  { lfHighlight('lf-type',  'Выберите тип');   return; }
+  if(!name){ alert("Введите имя"); return; }
+  if(!phone){ alert("Введите телефон"); return; }
 
-  const msg = [
-    '🏠 *Новая заявка с сайта BN Premium*',
-    '',
-    `👤 Имя: ${name}`,
-    `📞 Телефон: ${phone}`,
-    `🏗 Объект: ${type}`,
-    area    ? `📐 Площадь: ${area} м²` : '',
-    comment ? `💬 Комментарий: ${comment}` : '',
-  ].filter(Boolean).join('\n');
+  const referrer = document.getElementById('lf-ref') ? document.getElementById('lf-ref').value : '';
 
-  const url = 'https://wa.me/77761267613?text=' + encodeURIComponent(msg);
-  window.open(url, '_blank');
+  let msg = '🏠 Новая заявка BN Premium\n\n'
+    + '👤 Имя: ' + name + '\n'
+    + '📞 Телефон: ' + phone + '\n'
+    + '🏗 Тип объекта: ' + (type || '—') + '\n'
+    + '📐 Площадь: ' + (area || '—') + ' м²\n'
+    + '💬 ' + (comment || '—');
 
-  document.getElementById('lf-form').style.display    = 'none';
+  if(referrer){
+    msg += '\n\n🎁 РЕФЕРАЛ: клиент пришёл по ссылке от ' + referrer + '\n✅ Дать скидку 5% этому клиенту\n✅ Уведомить реферера ' + referrer + ' о скидке 5% на его следующий проект';
+  }
+
+  document.getElementById('lf-form').style.display = 'none';
   document.getElementById('lf-success').style.display = 'block';
-  document.getElementById('lf-success').classList.remove('hidden');
-}
 
-function lfHighlight(id, msg){
-  const el = document.getElementById(id);
-  el.style.borderBottomColor = '#e53e3e';
-  el.focus();
-  el.setAttribute('placeholder', msg);
-  setTimeout(()=>{ el.style.borderBottomColor=''; }, 1500);
-}
+  // Обновляем текст успеха если реферал
+  if(referrer){
+    document.querySelector('#lf-success h3').textContent = 'Заявка отправлена! 🎁';
+    document.querySelector('#lf-success p').textContent = 'Вам будет применена скидка 5%. Менеджер свяжется с вами в ближайшее время.';
+  }
 
-/* ── Калькулятор ── */
-function calcPrice(){
-
-let area=document.getElementById("area").value
-let type=document.getElementById("type").value
-
-let total=area*type
-
-document.getElementById("result").innerHTML=
-"Примерная стоимость: "+total.toLocaleString()+" ₸"
-
+  setTimeout(function(){
+    window.open('https://wa.me/77761267613?text=' + encodeURIComponent(msg), '_blank');
+  }, 400);
 }
 
 </script>
-  
+
+<script>
+/* ── Реферальная система ── */
+const refPhoneInput = document.getElementById('ref-phone');
+if(refPhoneInput){
+  refPhoneInput.addEventListener('input', function(e){
+    let v = e.target.value.replace(/\D/g,'');
+    if(v.startsWith('8')) v = '7'+v.slice(1);
+    if(v.length > 0 && !v.startsWith('7')) v = '7'+v;
+    v = v.slice(0,11);
+    let f = '';
+    if(v.length > 0)  f = '+'+v[0];
+    if(v.length > 1)  f += ' ('+v.slice(1,4);
+    if(v.length >= 4) f += ') '+v.slice(4,7);
+    if(v.length >= 7) f += '-'+v.slice(7,9);
+    if(v.length >= 9) f += '-'+v.slice(9,11);
+    e.target.value = f;
+  });
+}
+
+function generateRefLink(){
+  const phone = document.getElementById('ref-phone').value.trim();
+  if(!phone || phone.replace(/\D/g,'').length < 11){
+    alert('Введите корректный номер телефона');
+    return;
+  }
+  const digits = phone.replace(/\D/g,'');
+  // Кодируем номер в код — base64 URL-safe
+  const code = btoa(digits).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  const baseUrl = window.location.origin + window.location.pathname;
+  const refUrl = baseUrl + '?ref=' + code;
+
+  document.getElementById('ref-link-text').textContent = refUrl;
+  document.getElementById('ref-whatsapp-btn').href =
+    'https://wa.me/?text=' + encodeURIComponent(
+      'Привет! Советую BN Premium — ремонт квартир под ключ в Астане. Качество отличное, сам проверил! Вот ссылка со скидкой для тебя: ' + refUrl
+    );
+
+  document.getElementById('ref-get-block').style.display = 'none';
+  document.getElementById('ref-result-block').style.display = 'block';
+}
+
+function copyRefLink(){
+  const text = document.getElementById('ref-link-text').textContent;
+  navigator.clipboard.writeText(text).then(function(){
+    const btn = document.getElementById('ref-copy-btn');
+    btn.textContent = '✓ Скопировано!';
+    setTimeout(()=>{ btn.textContent = 'Копировать'; }, 2000);
+  });
+}
+
+// Когда страница открывается по реферальной ссылке
+window.addEventListener('DOMContentLoaded', function(){
+  const params = new URLSearchParams(window.location.search);
+  const ref = params.get('ref');
+  if(!ref) return;
+
+  // Декодируем номер реферера
+  let referrerPhone = '';
+  try {
+    const decoded = atob(ref.replace(/-/g,'+').replace(/_/g,'/'));
+    if(/^\d{11}$/.test(decoded)) {
+      referrerPhone = '+' + decoded;
+    }
+  } catch(e) {}
+
+  // Сохраняем в скрытый инпут формы заявки
+  const lfForm = document.getElementById('lf-form');
+  if(lfForm){
+    const hidden = document.createElement('input');
+    hidden.type = 'hidden';
+    hidden.id = 'lf-ref';
+    hidden.value = referrerPhone || ref;
+    lfForm.appendChild(hidden);
+  }
+
+  // Показываем баннер со скидкой
+  const banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#2D5A27;color:white;padding:14px 24px;border-radius:999px;font-size:14px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.2);z-index:9999;white-space:nowrap;';
+  banner.innerHTML = '🎁 Вам скидка 5% по реферальной ссылке! Оставьте заявку ниже.';
+  document.body.appendChild(banner);
+  setTimeout(()=>{ banner.style.opacity='0'; banner.style.transition='opacity 0.5s'; setTimeout(()=>banner.remove(), 500); }, 7000);
+
+  // Скролл к форме заявки через 1 сек
+  setTimeout(function(){
+    const formSection = document.getElementById('lead-form');
+    if(formSection) formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 1200);
+});
+</script>
 </body>
 </html>
-
-
-
 
 
 
